@@ -57,4 +57,9 @@ class Order extends Model
     {
         return $this->hasMany(PaymentLog::class);
     }
+
+    public function statusHistory(): HasMany
+    {
+        return $this->hasMany(OrderStatusHistory::class);
+    }
 }

@@ -41,4 +41,14 @@ class Vendor extends Model
     {
         return $this->hasMany(OrderItem::class);
     }
+
+    public function balances(): HasMany
+    {
+        return $this->hasMany(VendorBalance::class);
+    }
+
+    public function getEarningsAttribute(): string
+    {
+        return $this->balances()->where('status', 'pending')->sum('net_amount');
+    }
 }
