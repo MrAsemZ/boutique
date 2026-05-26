@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Vendor;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendOrderShippedNotification;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
 use App\Notifications\OrderConfirmedNotification;
@@ -88,10 +89,14 @@ class VendorOrderController extends Controller
                 'to_status'   => $newStatus,
                 'notes'       => $request->notes ?? "Updated by vendor: {$vendor->store_name}",
             ]);
-
-            // Notify customer
-            $order->user->notify(new OrderConfirmedNotification($order));
         });
+
+        // Dispatch the correct customer notification outside the transaction
+        if ($newStatus === 'shipped') {
+            SendOrderShippedNotification::dispatch($order);
+        } else {
+            $order->user->notify(new OrderConfirmedNotification($order));
+        }
 
         return response()->json([
             'success' => true,

@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderResource;
+use App\Jobs\SendOrderDeliveredNotification;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
 use App\Models\VendorBalance;
+use App\Notifications\VendorPayoutNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -52,8 +54,9 @@ class AdminOrderController extends Controller
 
             $order->update(['status' => $newStatus]);
 
-            // Create VendorBalance records when order is marked delivered
             if ($newStatus === 'delivered') {
+                $uniqueVendors = collect();
+
                 foreach ($order->items as $item) {
                     $vendor           = $item->vendor;
                     $gross            = (float) $item->total_price;
@@ -69,6 +72,16 @@ class AdminOrderController extends Controller
                         'net_amount'        => $netAmount,
                         'status'            => 'pending',
                     ]);
+
+                    if ($vendor && ! $uniqueVendors->has($vendor->id)) {
+                        $uniqueVendors->put($vendor->id, $vendor);
+                    }
+                }
+
+                // Notify each vendor their earnings were credited
+                foreach ($uniqueVendors as $vendor) {
+                    $vendor->loadMissing('user');
+                    $vendor->user->notify(new VendorPayoutNotification($vendor));
                 }
             }
 
@@ -80,6 +93,11 @@ class AdminOrderController extends Controller
                 'notes'       => $request->notes ?? "Status updated by admin",
             ]);
         });
+
+        // Dispatch customer notification outside the transaction
+        if ($request->status === 'delivered') {
+            SendOrderDeliveredNotification::dispatch($order);
+        }
 
         return response()->json([
             'success' => true,
