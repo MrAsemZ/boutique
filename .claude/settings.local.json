@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Head -50)",
+      "PowerShell(cmd /c \"dir c:\\\\wamp64\\\\www\\\\Botique\")",
+      "PowerShell(cmd /c \"dir c:\\\\wamp64\\\\www\\\\Botique\\\\boutique-api\")"
+    ]
+  }
+}

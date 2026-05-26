@@ -24,13 +24,16 @@ class Order extends Model
         'payment_method',
         'payment_status',
         'notes',
+        'cliq_request_id',
+        'cliq_expires_at',
     ];
 
     protected $casts = [
-        'subtotal'     => 'decimal:2',
-        'discount'     => 'decimal:2',
-        'shipping_fee' => 'decimal:2',
-        'total'        => 'decimal:2',
+        'subtotal'       => 'decimal:2',
+        'discount'       => 'decimal:2',
+        'shipping_fee'   => 'decimal:2',
+        'total'          => 'decimal:2',
+        'cliq_expires_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

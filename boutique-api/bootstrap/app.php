@@ -14,12 +14,14 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'role'           => \App\Http\Middleware\CheckRole::class,
-            'email.verified' => \App\Http\Middleware\EnsureEmailVerified::class,
+            'role'              => \App\Http\Middleware\CheckRole::class,
+            'email.verified'    => \App\Http\Middleware\EnsureEmailVerified::class,
+            // 'webhook.paypal' => \App\Http\Middleware\VerifyPayPalWebhook::class, // DISABLED — see PayPalService.php
+            'webhook.cliq'      => \App\Http\Middleware\VerifyCliqWebhook::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $_, $request) {
             if ($request->is('api/*')) {
                 return response()->json([
                     'success' => false,
