@@ -44,9 +44,9 @@ class WishlistController extends Controller
             ['sale_notified_at' => null]
         );
 
-        $items = $this->loadWishlist($request->user()->id);
+        $items  = $this->loadWishlist($request->user()->id);
         $status = $wishlist->wasRecentlyCreated ? 201 : 200;
-        return $this->success(new WishlistResource($items), 'Item added to wishlist.', $status);
+        return $this->success(new WishlistResource($items), __('messages.wishlist.added'), $status);
     }
 
     public function destroy(Request $request, int $id): JsonResponse
@@ -58,6 +58,6 @@ class WishlistController extends Controller
         $wishlist->delete();
 
         $items = $this->loadWishlist($request->user()->id);
-        return $this->success(new WishlistResource($items), 'Item removed from wishlist.');
+        return $this->success(new WishlistResource($items), __('messages.wishlist.removed'));
     }
 }

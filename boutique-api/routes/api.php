@@ -14,6 +14,7 @@ use App\Http\Controllers\Payment\PaymentController;
 use App\Http\Controllers\Product\CategoryController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\User\AddressController;
+use App\Http\Controllers\User\UserController;
 use App\Http\Controllers\Vendor\VendorApplicationController;
 use App\Http\Controllers\Vendor\VendorBalanceController;
 use App\Http\Controllers\Vendor\VendorOrderController;
@@ -108,12 +109,16 @@ Route::middleware('auth:sanctum')->prefix('vouchers')->name('vouchers.')->group(
 | User Addresses — auth required
 |--------------------------------------------------------------------------
 */
-Route::middleware('auth:sanctum')->prefix('user/addresses')->name('user.addresses.')->group(function () {
-    Route::get('/', [AddressController::class, 'index'])->name('index');
-    Route::post('/', [AddressController::class, 'store'])->name('store');
-    Route::put('{id}', [AddressController::class, 'update'])->name('update');
-    Route::delete('{id}', [AddressController::class, 'destroy'])->name('destroy');
-    Route::put('{id}/default', [AddressController::class, 'setDefault'])->name('set-default');
+Route::middleware('auth:sanctum')->prefix('user')->name('user.')->group(function () {
+    Route::put('locale', [UserController::class, 'updateLocale'])->name('locale');
+
+    Route::prefix('addresses')->name('addresses.')->group(function () {
+        Route::get('/', [AddressController::class, 'index'])->name('index');
+        Route::post('/', [AddressController::class, 'store'])->name('store');
+        Route::put('{id}', [AddressController::class, 'update'])->name('update');
+        Route::delete('{id}', [AddressController::class, 'destroy'])->name('destroy');
+        Route::put('{id}/default', [AddressController::class, 'setDefault'])->name('set-default');
+    });
 });
 
 /*

@@ -19,6 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
             // 'webhook.paypal' => \App\Http\Middleware\VerifyPayPalWebhook::class, // DISABLED — see PayPalService.php
             'webhook.cliq'      => \App\Http\Middleware\VerifyCliqWebhook::class,
         ]);
+
+        $middleware->appendToGroup('api', \App\Http\Middleware\SetLocale::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (\Illuminate\Auth\AuthenticationException $_, $request) {

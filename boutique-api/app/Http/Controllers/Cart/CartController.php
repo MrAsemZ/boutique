@@ -42,7 +42,7 @@ class CartController extends Controller
 
         if ($variant->stock < $request->quantity) {
             return $this->error(
-                "Only {$variant->stock} unit(s) available in stock.",
+                __('messages.cart.stock_limit', ['count' => $variant->stock]),
                 null,
                 422
             );
@@ -67,7 +67,7 @@ class CartController extends Controller
         }
 
         $items = $this->loadCart($request->user()->id);
-        return $this->success(new CartResource($items), 'Item added to cart.', $statusCode);
+        return $this->success(new CartResource($items), __('messages.cart.added'), $statusCode);
     }
 
     public function update(Request $request, int $id): JsonResponse
@@ -82,7 +82,7 @@ class CartController extends Controller
 
         if ($request->quantity > $variant->stock) {
             return $this->error(
-                "Only {$variant->stock} unit(s) available in stock.",
+                __('messages.cart.stock_limit', ['count' => $variant->stock]),
                 null,
                 422
             );
@@ -91,7 +91,7 @@ class CartController extends Controller
         $cartItem->update(['quantity' => $request->quantity]);
 
         $items = $this->loadCart($request->user()->id);
-        return $this->success(new CartResource($items), 'Cart updated.');
+        return $this->success(new CartResource($items), __('messages.cart.updated'));
     }
 
     public function destroy(Request $request, int $id): JsonResponse
@@ -103,12 +103,12 @@ class CartController extends Controller
         $cartItem->delete();
 
         $items = $this->loadCart($request->user()->id);
-        return $this->success(new CartResource($items), 'Item removed from cart.');
+        return $this->success(new CartResource($items), __('messages.cart.removed'));
     }
 
     public function clear(Request $request): JsonResponse
     {
         CartItem::where('user_id', $request->user()->id)->delete();
-        return $this->success(new CartResource(collect()), 'Cart cleared.');
+        return $this->success(new CartResource(collect()), __('messages.cart.cleared'));
     }
 }

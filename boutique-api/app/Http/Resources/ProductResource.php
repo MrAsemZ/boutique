@@ -10,6 +10,7 @@ class ProductResource extends JsonResource
     public function toArray(Request $request): array
     {
         $primaryImage = $this->images->firstWhere('is_primary', true);
+        $locale       = app()->getLocale();
 
         $inStock = $this->variants
             ->where('is_active', true)
@@ -27,6 +28,12 @@ class ProductResource extends JsonResource
             'id'                   => $this->id,
             'name'                 => $this->name,
             'name_ar'              => $this->name_ar,
+            'display_name'         => ($locale === 'ar' && $this->name_ar) ? $this->name_ar : $this->name,
+            'description'          => $this->description ?? null,
+            'description_ar'       => $this->description_ar ?? null,
+            'display_description'  => ($locale === 'ar' && ($this->description_ar ?? null))
+                ? $this->description_ar
+                : ($this->description ?? null),
             'slug'                 => $this->slug,
             'base_price'           => (float) $this->base_price,
             'sale_price'           => $this->sale_price ? (float) $this->sale_price : null,
@@ -37,10 +44,13 @@ class ProductResource extends JsonResource
             'primary_image_url'    => $primaryImage?->url,
             'in_stock'             => $inStock,
             'category'             => $this->whenLoaded('category', fn() => [
-                'id'      => $this->category->id,
-                'name'    => $this->category->name,
-                'name_ar' => $this->category->name_ar,
-                'gender'  => $this->category->gender,
+                'id'           => $this->category->id,
+                'name'         => $this->category->name,
+                'name_ar'      => $this->category->name_ar,
+                'display_name' => ($locale === 'ar' && $this->category->name_ar)
+                    ? $this->category->name_ar
+                    : $this->category->name,
+                'gender'       => $this->category->gender,
             ]),
         ];
     }

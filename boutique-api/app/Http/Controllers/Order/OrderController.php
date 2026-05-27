@@ -49,11 +49,11 @@ class OrderController extends Controller
         ])->find($id);
 
         if (! $order) {
-            return response()->json(['success' => false, 'message' => 'Order not found.'], 404);
+            return response()->json(['success' => false, 'message' => __('messages.orders.not_found')], 404);
         }
 
         if ($order->user_id !== $request->user()->id) {
-            return response()->json(['success' => false, 'message' => 'Forbidden.'], 403);
+            return response()->json(['success' => false, 'message' => __('messages.orders.forbidden')], 403);
         }
 
         return response()->json([
@@ -69,13 +69,13 @@ class OrderController extends Controller
             ->first();
 
         if (! $order) {
-            return response()->json(['success' => false, 'message' => 'Order not found.'], 404);
+            return response()->json(['success' => false, 'message' => __('messages.orders.not_found')], 404);
         }
 
         if ($order->status !== 'pending') {
             return response()->json([
                 'success' => false,
-                'message' => 'Only pending orders can be cancelled.',
+                'message' => __('messages.orders.cancel_not_pending'),
             ], 422);
         }
 
@@ -108,7 +108,7 @@ class OrderController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Order cancelled successfully.',
+            'message' => __('messages.orders.cancelled'),
         ]);
     }
 }

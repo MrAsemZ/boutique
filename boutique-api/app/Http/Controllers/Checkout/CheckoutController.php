@@ -12,7 +12,6 @@ use App\Models\UserAddress;
 use App\Models\Voucher;
 use App\Services\PaymentServices\CliQService;
 use App\Services\PaymentServices\CodService;
-use App\Services\PaymentServices\PayPalService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,9 +19,8 @@ use Illuminate\Support\Facades\DB;
 class CheckoutController extends Controller
 {
     public function __construct(
-        private PayPalService $payPalService,
-        private CliQService   $cliqService,
-        private CodService    $codService,
+        private CliQService $cliqService,
+        private CodService  $codService,
     ) {}
 
     public function checkout(Request $request): JsonResponse
@@ -46,7 +44,7 @@ class CheckoutController extends Controller
                 ->get();
 
             if ($cartItems->isEmpty()) {
-                abort(response()->json(['success' => false, 'message' => 'Your cart is empty.'], 422));
+                abort(response()->json(['success' => false, 'message' => __('messages.orders.empty_cart')], 422));
             }
 
             // 2. VALIDATE STOCK — lock variants to prevent race conditions
@@ -67,7 +65,7 @@ class CheckoutController extends Controller
             if (! empty($outOfStock)) {
                 abort(response()->json([
                     'success' => false,
-                    'message' => 'Some items are out of stock.',
+                    'message' => __('messages.orders.out_of_stock'),
                     'data'    => ['out_of_stock' => $outOfStock],
                 ], 422));
             }
@@ -78,7 +76,7 @@ class CheckoutController extends Controller
                 ->first();
 
             if (! $address) {
-                abort(response()->json(['success' => false, 'message' => 'Invalid delivery address.'], 422));
+                abort(response()->json(['success' => false, 'message' => __('messages.orders.invalid_address')], 422));
             }
 
             // 4 + 5. CALCULATE TOTALS & VALIDATE VOUCHER
@@ -98,13 +96,13 @@ class CheckoutController extends Controller
                     ->first();
 
                 if (! $voucher || ($voucher->max_uses !== null && $voucher->used_count >= $voucher->max_uses)) {
-                    abort(response()->json(['success' => false, 'message' => 'Invalid or expired voucher.'], 422));
+                    abort(response()->json(['success' => false, 'message' => __('messages.orders.invalid_voucher')], 422));
                 }
 
                 if ($subtotal < $voucher->min_order) {
                     abort(response()->json([
                         'success' => false,
-                        'message' => "Minimum order amount for this voucher is {$voucher->min_order} JOD.",
+                        'message' => __('messages.orders.voucher_min_order', ['amount' => $voucher->min_order]),
                     ], 422));
                 }
 
@@ -188,14 +186,14 @@ class CheckoutController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Order placed successfully.',
+            'message' => __('messages.orders.placed'),
             'data'    => array_merge([
                 'order_number'       => $order->order_number,
                 'order_id'           => $order->id,
                 'total'              => $order->total,
                 'payment_method'     => $order->payment_method,
                 'payment_status'     => $order->payment_status,
-                'estimated_delivery' => '3-5 business days',
+                'estimated_delivery' => __('messages.orders.estimated_delivery'),
             ], $responseExtra),
         ], 201);
     }

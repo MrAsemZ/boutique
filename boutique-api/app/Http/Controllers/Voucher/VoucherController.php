@@ -21,27 +21,27 @@ class VoucherController extends Controller
 
         $voucher = Voucher::whereRaw('LOWER(code) = ?', [strtolower($request->code)])->first();
 
-        if (!$voucher) {
-            return $this->error('Voucher code not found.', null, 404);
+        if (! $voucher) {
+            return $this->error(__('messages.vouchers.not_found'), null, 404);
         }
 
-        if (!$voucher->is_active) {
-            return $this->error('This voucher is no longer active.', null, 422);
+        if (! $voucher->is_active) {
+            return $this->error(__('messages.vouchers.inactive'), null, 422);
         }
 
         if ($voucher->expires_at && $voucher->expires_at->isPast()) {
-            return $this->error('This voucher has expired.', null, 422);
+            return $this->error(__('messages.vouchers.expired'), null, 422);
         }
 
         if ($voucher->max_uses !== null && $voucher->used_count >= $voucher->max_uses) {
-            return $this->error('This voucher has reached its usage limit.', null, 422);
+            return $this->error(__('messages.vouchers.limit_reached'), null, 422);
         }
 
         $cartTotal = (float) $request->cart_total;
 
         if ($cartTotal < (float) $voucher->min_order) {
             return $this->error(
-                "Minimum order of {$voucher->min_order} required to use this voucher.",
+                __('messages.vouchers.min_order', ['amount' => $voucher->min_order]),
                 null,
                 422
             );
@@ -57,12 +57,12 @@ class VoucherController extends Controller
         $finalTotal = max(0, round($cartTotal - $discountAmount, 2));
 
         return $this->success([
-            'valid'          => true,
-            'code'           => $voucher->code,
-            'voucher_type'   => $voucher->type,
-            'discount_amount'=> $discountAmount,
-            'final_total'    => $finalTotal,
-            'message'        => "Voucher applied! You save {$discountAmount}.",
-        ], 'Voucher is valid.');
+            'valid'           => true,
+            'code'            => $voucher->code,
+            'voucher_type'    => $voucher->type,
+            'discount_amount' => $discountAmount,
+            'final_total'     => $finalTotal,
+            'message'         => __('messages.vouchers.applied', ['amount' => $discountAmount]),
+        ], __('messages.vouchers.valid'));
     }
 }

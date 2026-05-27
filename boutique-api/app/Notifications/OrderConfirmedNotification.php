@@ -13,14 +13,14 @@ class OrderConfirmedNotification extends Notification
 
     public function __construct(public readonly Order $order) {}
 
-    public function via(object $notifiable): array
+    public function via(object $_): array
     {
         return ['database', 'mail'];
     }
 
     public function toMail(object $notifiable): MailMessage
     {
-        $isAr        = ($notifiable->preferred_locale ?? 'en') === 'ar';
+        $isAr        = ($notifiable->preferred_locale ?? 'ar') === 'ar';
         $orderNumber = $this->order->order_number;
         $total       = $this->order->total . ' JOD';
 
@@ -52,7 +52,7 @@ class OrderConfirmedNotification extends Notification
 
     public function toDatabase(object $notifiable): array
     {
-        $locale = $notifiable->preferred_locale ?? 'en';
+        $locale = $notifiable->preferred_locale ?? 'ar';
 
         $messages = [
             'en' => "Your order {$this->order->order_number} has been confirmed and is being processed.",
