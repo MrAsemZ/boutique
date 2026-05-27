@@ -1,0 +1,37 @@
+/* RTL specific overrides */
+[dir="rtl"] {
+  font-family: 'Tajawal', 'Segoe UI', sans-serif;
+}
+
+[dir="ltr"] {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+/* Flip margins and paddings for RTL */
+[dir="rtl"] .ml-auto { margin-left: unset; margin-right: auto; }
+[dir="rtl"] .mr-auto { margin-right: unset; margin-left: auto; }
+[dir="rtl"] .pl-4 { padding-left: unset; padding-right: 1rem; }
+[dir="rtl"] .pr-4 { padding-right: unset; padding-left: 1rem; }
+[dir="rtl"] .text-left { text-align: right; }
+[dir="rtl"] .text-right { text-align: left; }
+[dir="rtl"] .rounded-l-lg { border-radius: 0 0.5rem 0.5rem 0; }
+[dir="rtl"] .rounded-r-lg { border-radius: 0.5rem 0 0 0.5rem; }
+
+/* Flip icons that have direction meaning */
+[dir="rtl"] .icon-directional {
+  transform: scaleX(-1);
+}
+
+/* Arabic typography improvements */
+[dir="rtl"] h1,
+[dir="rtl"] h2,
+[dir="rtl"] h3 {
+  letter-spacing: 0;
+  line-height: 1.8;
+}
+
+[dir="rtl"] p,
+[dir="rtl"] span,
+[dir="rtl"] li {
+  line-height: 2;
+}

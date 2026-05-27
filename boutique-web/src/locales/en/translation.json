@@ -1,0 +1,92 @@
+{
+  "nav": {
+    "home": "Home",
+    "shop": "Shop",
+    "cart": "Cart",
+    "wishlist": "Wishlist",
+    "orders": "My Orders",
+    "account": "Account",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register"
+  },
+  "home": {
+    "featured": "Featured Products",
+    "new_arrivals": "New Arrivals",
+    "categories": "Categories",
+    "shop_now": "Shop Now",
+    "view_all": "View All"
+  },
+  "product": {
+    "add_to_cart": "Add to Cart",
+    "add_to_wishlist": "Add to Wishlist",
+    "out_of_stock": "Out of Stock",
+    "size": "Size",
+    "color": "Color",
+    "material": "Material",
+    "description": "Description",
+    "reviews": "Reviews",
+    "related": "Related Products",
+    "sar": "JOD"
+  },
+  "cart": {
+    "title": "Shopping Cart",
+    "empty": "Your cart is empty",
+    "total": "Total",
+    "checkout": "Checkout",
+    "remove": "Remove",
+    "quantity": "Quantity",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "discount": "Discount",
+    "voucher": "Voucher Code",
+    "apply": "Apply"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "address": "Delivery Address",
+    "payment": "Payment Method",
+    "cod": "Cash on Delivery",
+    "cliq": "Pay with CliQ",
+    "place_order": "Place Order",
+    "order_summary": "Order Summary"
+  },
+  "auth": {
+    "email": "Email Address",
+    "password": "Password",
+    "name": "Full Name",
+    "login": "Login",
+    "register": "Create Account",
+    "forgot_password": "Forgot password?",
+    "no_account": "Don't have an account?",
+    "have_account": "Already have an account?",
+    "gender": "Gender",
+    "male": "Male",
+    "female": "Female"
+  },
+  "orders": {
+    "title": "My Orders",
+    "order_number": "Order Number",
+    "status": "Status",
+    "total": "Total",
+    "date": "Date",
+    "pending": "Pending",
+    "confirmed": "Confirmed",
+    "shipped": "Shipped",
+    "delivered": "Delivered",
+    "cancelled": "Cancelled"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Try Again",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "price": "Price",
+    "free_shipping": "Free Shipping"
+  }
+}

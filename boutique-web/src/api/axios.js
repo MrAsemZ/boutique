@@ -1,4 +1,7 @@
-import axios from 'axios'
+import axios from 'axios';
+import i18n from '../i18n/index.js';
+
+const locale = localStorage.getItem('boutique_locale') || 'ar';
 
 const api = axios.create({
   baseURL: 'http://localhost:8000/api',
@@ -6,7 +9,12 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-  }
-})
+    'Accept-Language': locale,
+  },
+});
 
-export default api
+i18n.on('languageChanged', (lng) => {
+  api.defaults.headers.common['Accept-Language'] = lng;
+});
+
+export default api;

@@ -1,0 +1,92 @@
+{
+  "nav": {
+    "home": "الرئيسية",
+    "shop": "المتجر",
+    "cart": "السلة",
+    "wishlist": "قائمة الأمنيات",
+    "orders": "طلباتي",
+    "account": "حسابي",
+    "logout": "تسجيل الخروج",
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب"
+  },
+  "home": {
+    "featured": "منتجات مميزة",
+    "new_arrivals": "وصل حديثاً",
+    "categories": "التصنيفات",
+    "shop_now": "تسوق الآن",
+    "view_all": "عرض الكل"
+  },
+  "product": {
+    "add_to_cart": "أضف إلى السلة",
+    "add_to_wishlist": "أضف إلى الأمنيات",
+    "out_of_stock": "غير متوفر",
+    "size": "المقاس",
+    "color": "اللون",
+    "material": "الخامة",
+    "description": "الوصف",
+    "reviews": "التقييمات",
+    "related": "منتجات مشابهة",
+    "sar": "د.أ"
+  },
+  "cart": {
+    "title": "سلة التسوق",
+    "empty": "سلتك فارغة",
+    "total": "الإجمالي",
+    "checkout": "إتمام الشراء",
+    "remove": "إزالة",
+    "quantity": "الكمية",
+    "subtotal": "المجموع الجزئي",
+    "shipping": "رسوم الشحن",
+    "discount": "الخصم",
+    "voucher": "رمز الخصم",
+    "apply": "تطبيق"
+  },
+  "checkout": {
+    "title": "إتمام الشراء",
+    "address": "عنوان التسليم",
+    "payment": "طريقة الدفع",
+    "cod": "الدفع عند الاستلام",
+    "cliq": "الدفع عبر CliQ",
+    "place_order": "تأكيد الطلب",
+    "order_summary": "ملخص الطلب"
+  },
+  "auth": {
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "name": "الاسم الكامل",
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب",
+    "forgot_password": "نسيت كلمة المرور؟",
+    "no_account": "ليس لديك حساب؟",
+    "have_account": "لديك حساب بالفعل؟",
+    "gender": "الجنس",
+    "male": "ذكر",
+    "female": "أنثى"
+  },
+  "orders": {
+    "title": "طلباتي",
+    "order_number": "رقم الطلب",
+    "status": "الحالة",
+    "total": "الإجمالي",
+    "date": "التاريخ",
+    "pending": "قيد الانتظار",
+    "confirmed": "مؤكد",
+    "shipped": "تم الشحن",
+    "delivered": "تم التسليم",
+    "cancelled": "ملغي"
+  },
+  "common": {
+    "loading": "جارٍ التحميل...",
+    "error": "حدث خطأ",
+    "retry": "حاول مجدداً",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "confirm": "تأكيد",
+    "search": "بحث",
+    "filter": "تصفية",
+    "sort": "ترتيب",
+    "price": "السعر",
+    "free_shipping": "شحن مجاني"
+  }
+}
