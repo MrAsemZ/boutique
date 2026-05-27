@@ -38,7 +38,15 @@ return [
         'estimated_delivery' => '3-5 business days',
     ],
 
+    'vendor' => [
+        'profile_not_found' => 'Vendor profile not found.',
+        'order_not_found'   => 'Order not found.',
+    ],
+
     'user' => [
-        'locale_updated' => 'Language preference updated.',
+        'locale_updated'         => 'Language preference updated.',
+        'profile_updated'        => 'Profile updated successfully.',
+        'password_changed'       => 'Password changed successfully.',
+        'wrong_current_password' => 'The current password is incorrect.',
     ],
 ];

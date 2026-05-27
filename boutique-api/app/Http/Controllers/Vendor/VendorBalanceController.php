@@ -13,7 +13,7 @@ class VendorBalanceController extends Controller
         $vendor = $request->user()->vendor;
 
         if (! $vendor) {
-            return response()->json(['success' => false, 'message' => 'Vendor profile not found.'], 404);
+            return response()->json(['success' => false, 'message' => __('messages.vendor.profile_not_found')], 404);
         }
 
         $totalEarned    = (float) $vendor->balances()->sum('net_amount');

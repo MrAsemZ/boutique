@@ -35,6 +35,13 @@ return [
         ],
     ],
 
+    'cliq' => [
+        'merchant_id'    => env('CLIQ_MERCHANT_ID'),
+        'api_key'        => env('CLIQ_API_KEY'),
+        'base_url'       => env('CLIQ_BASE_URL'),
+        'webhook_secret' => env('CLIQ_WEBHOOK_SECRET', ''),
+    ],
+
     'google' => [
         'client_id'     => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),

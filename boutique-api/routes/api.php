@@ -35,8 +35,8 @@ Route::prefix('auth')->name('auth.')->group(function () {
         ->name('verify-email')
         ->middleware('signed');
 
-    Route::post('forgot-password', [PasswordController::class, 'forgotPassword'])->name('forgot-password');
-    Route::post('reset-password', [PasswordController::class, 'resetPassword'])->name('reset-password');
+    Route::post('forgot-password', [PasswordController::class, 'forgotPassword'])->name('forgot-password')->middleware('throttle:5,1');
+    Route::post('reset-password', [PasswordController::class, 'resetPassword'])->name('reset-password')->middleware('throttle:5,1');
 
     Route::prefix('social')->name('social.')->group(function () {
         Route::get('{provider}/redirect', [SocialAuthController::class, 'redirect'])->name('redirect');
@@ -110,6 +110,9 @@ Route::middleware('auth:sanctum')->prefix('vouchers')->name('vouchers.')->group(
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth:sanctum')->prefix('user')->name('user.')->group(function () {
+    Route::get('profile', [UserController::class, 'profile'])->name('profile');
+    Route::put('profile', [UserController::class, 'updateProfile'])->name('profile.update');
+    Route::put('password', [UserController::class, 'changePassword'])->name('password.change');
     Route::put('locale', [UserController::class, 'updateLocale'])->name('locale');
 
     Route::prefix('addresses')->name('addresses.')->group(function () {
@@ -176,25 +179,12 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('admin.
     Route::put('payouts/{vendor_id}/mark-paid', [AdminPayoutController::class, 'markPaid'])->name('payouts.mark-paid');
 });
 
-// ============================================
-// PAYPAL ROUTES — DISABLED (not supported in JO)
-// Uncomment when PayPal integration is needed
-// ============================================
-// Route::prefix('payments')->name('payments.')->group(function () {
-//     Route::get('paypal/success', [PaymentController::class, 'paypalSuccess'])->name('paypal.success');
-//     Route::get('paypal/cancel', [PaymentController::class, 'paypalCancel'])->name('paypal.cancel');
-// });
-
 /*
 |--------------------------------------------------------------------------
 | Webhooks (no auth middleware — signature verified inside middleware)
 |--------------------------------------------------------------------------
 */
 Route::prefix('webhooks')->name('webhooks.')->group(function () {
-    // Route::post('paypal', [PaymentController::class, 'paypalWebhook'])  // DISABLED — see above
-    //     ->middleware('webhook.paypal')
-    //     ->name('paypal');
-
     Route::post('cliq', [PaymentController::class, 'cliqWebhook'])
         ->middleware('webhook.cliq')
         ->name('cliq');

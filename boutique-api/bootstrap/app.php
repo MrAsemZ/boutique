@@ -14,10 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'role'              => \App\Http\Middleware\CheckRole::class,
-            'email.verified'    => \App\Http\Middleware\EnsureEmailVerified::class,
-            // 'webhook.paypal' => \App\Http\Middleware\VerifyPayPalWebhook::class, // DISABLED — see PayPalService.php
-            'webhook.cliq'      => \App\Http\Middleware\VerifyCliqWebhook::class,
+            'role'          => \App\Http\Middleware\CheckRole::class,
+            'email.verified' => \App\Http\Middleware\EnsureEmailVerified::class,
+            'webhook.cliq'  => \App\Http\Middleware\VerifyCliqWebhook::class,
         ]);
 
         $middleware->appendToGroup('api', \App\Http\Middleware\SetLocale::class);

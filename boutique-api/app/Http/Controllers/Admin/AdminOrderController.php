@@ -48,6 +48,22 @@ class AdminOrderController extends Controller
 
         $order = Order::with(['items.vendor'])->findOrFail($id);
 
+        $allowedTransitions = [
+            'pending'   => ['confirmed', 'cancelled'],
+            'confirmed' => ['shipped', 'cancelled'],
+            'shipped'   => ['delivered'],
+            'delivered' => [],
+            'cancelled' => [],
+        ];
+
+        $newStatus = $request->status;
+        if (! in_array($newStatus, $allowedTransitions[$order->status] ?? [], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Cannot transition order from '{$order->status}' to '{$newStatus}'.",
+            ], 422);
+        }
+
         DB::transaction(function () use ($order, $request) {
             $previousStatus = $order->status;
             $newStatus      = $request->status;

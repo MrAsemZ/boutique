@@ -18,7 +18,7 @@ class VendorOrderController extends Controller
         $vendor = $request->user()->vendor;
 
         if (! $vendor) {
-            return response()->json(['success' => false, 'message' => 'Vendor profile not found.'], 404);
+            return response()->json(['success' => false, 'message' => __('messages.vendor.profile_not_found')], 404);
         }
 
         $orders = Order::whereHas('items', fn($q) => $q->where('vendor_id', $vendor->id))
@@ -49,7 +49,7 @@ class VendorOrderController extends Controller
         $vendor = $request->user()->vendor;
 
         if (! $vendor) {
-            return response()->json(['success' => false, 'message' => 'Vendor profile not found.'], 404);
+            return response()->json(['success' => false, 'message' => __('messages.vendor.profile_not_found')], 404);
         }
 
         $request->validate([
@@ -61,7 +61,7 @@ class VendorOrderController extends Controller
             ->find($id);
 
         if (! $order) {
-            return response()->json(['success' => false, 'message' => 'Order not found.'], 404);
+            return response()->json(['success' => false, 'message' => __('messages.vendor.order_not_found')], 404);
         }
 
         $allowedTransitions = [

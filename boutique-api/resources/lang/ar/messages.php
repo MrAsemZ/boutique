@@ -38,7 +38,15 @@ return [
         'estimated_delivery' => '3-5 أيام عمل',
     ],
 
+    'vendor' => [
+        'profile_not_found' => 'الملف التعريفي للبائع غير موجود.',
+        'order_not_found'   => 'الطلب غير موجود.',
+    ],
+
     'user' => [
-        'locale_updated' => 'تم تحديث اللغة بنجاح.',
+        'locale_updated'       => 'تم تحديث اللغة بنجاح.',
+        'profile_updated'      => 'تم تحديث الملف الشخصي بنجاح.',
+        'password_changed'     => 'تم تغيير كلمة المرور بنجاح.',
+        'wrong_current_password' => 'كلمة المرور الحالية غير صحيحة.',
     ],
 ];

@@ -35,7 +35,7 @@ class CheckoutController extends Controller
         $user = $request->user();
 
         // Steps 1-11 run inside a transaction; payment initiation happens outside
-        // so that a PayPal API timeout doesn't roll back an already-created order.
+        // so that a payment gateway timeout doesn't roll back an already-created order.
         $order = DB::transaction(function () use ($request, $user) {
 
             // 1. LOAD CART
@@ -175,7 +175,6 @@ class CheckoutController extends Controller
         // 12. INITIATE PAYMENT (outside transaction — external API calls must not hold DB locks)
         $responseExtra = [];
 
-        // PayPal disabled — see PayPalService.php for re-enabling instructions
         if ($request->payment_method === 'cliq') {
             $result                          = $this->cliqService->createPaymentRequest($order);
             $responseExtra['cliq_request_id'] = $result['cliq_request_id'];

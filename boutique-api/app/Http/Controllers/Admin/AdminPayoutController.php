@@ -13,13 +13,13 @@ class AdminPayoutController extends Controller
 {
     public function index(): JsonResponse
     {
-        $pendingPayouts = VendorBalance::pending()
+        $paginator = VendorBalance::pending()
             ->select('vendor_id', DB::raw('SUM(net_amount) as pending_amount'))
             ->groupBy('vendor_id')
             ->having(DB::raw('SUM(net_amount)'), '>', 0)
             ->with(['vendor:id,store_name,bank_account,user_id', 'vendor.user:id,name,email'])
-            ->get()
-            ->map(fn($row) => [
+            ->paginate(20)
+            ->through(fn($row) => [
                 'vendor_id'      => $row->vendor_id,
                 'vendor_name'    => $row->vendor?->user?->name,
                 'store_name'     => $row->vendor?->store_name,
@@ -29,7 +29,13 @@ class AdminPayoutController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $pendingPayouts,
+            'data'    => $paginator->items(),
+            'meta'    => [
+                'current_page' => $paginator->currentPage(),
+                'last_page'    => $paginator->lastPage(),
+                'per_page'     => $paginator->perPage(),
+                'total'        => $paginator->total(),
+            ],
         ]);
     }
 

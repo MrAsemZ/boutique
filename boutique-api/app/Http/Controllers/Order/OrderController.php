@@ -40,21 +40,22 @@ class OrderController extends Controller
 
     public function show(Request $request, int $id): JsonResponse
     {
-        $order = Order::with([
-            'items.variant.product',
-            'items.vendor:id,store_name',
-            'address',
-            'paymentLogs',
-            'statusHistory.changedBy:id,name',
-        ])->find($id);
+        // Ownership check first — avoids loading relations for orders that don't belong to the user
+        $order = Order::where('id', $id)
+            ->where('user_id', $request->user()->id)
+            ->first();
 
         if (! $order) {
             return response()->json(['success' => false, 'message' => __('messages.orders.not_found')], 404);
         }
 
-        if ($order->user_id !== $request->user()->id) {
-            return response()->json(['success' => false, 'message' => __('messages.orders.forbidden')], 403);
-        }
+        $order->load([
+            'items.variant.product',
+            'items.vendor:id,store_name',
+            'address',
+            'paymentLogs',
+            'statusHistory.changedBy:id,name',
+        ]);
 
         return response()->json([
             'success' => true,

@@ -4,7 +4,7 @@ import i18n from '../i18n/index.js';
 const locale = localStorage.getItem('boutique_locale') || 'ar';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
