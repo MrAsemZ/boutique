@@ -1,125 +1,104 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import './i18n/index.js'
 import './styles/rtl.css'
+
+import { QueryClientProvider } from '@tanstack/react-query'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { Toaster } from 'react-hot-toast'
+
+import { ThemeProvider } from './contexts/ThemeContext'
+import { queryClient } from './lib/queryClient'
 import { useDirection } from './hooks/useDirection'
 
-function App() {
-  const [count, setCount] = useState(0)
+import Navbar from './components/layout/Navbar'
+import Footer from './components/layout/Footer'
+import PageWrapper from './components/layout/PageWrapper'
+import AuthGuard from './components/routing/AuthGuard'
+import GuestGuard from './components/routing/GuestGuard'
+import RoleGuard from './components/routing/RoleGuard'
+
+import HomePage from './pages/HomePage'
+import NotFoundPage from './pages/NotFoundPage'
+import { LoginPage, RegisterPage, ForgotPasswordPage } from './pages/authPages'
+import { ProductListingPage, ProductDetailPage } from './pages/shopPages'
+import { CartPage, CheckoutPage, OrderSuccessPage, OrderCancelledPage } from './pages/checkoutPages'
+import { OrderHistoryPage, OrderDetailPage } from './pages/orderPages'
+import { ProfilePage, AddressPage, WishlistPage } from './pages/accountPages'
+import { VendorDashboardPage, AdminDashboardPage } from './pages/adminPages'
+
+function AppInner() {
   const { dir } = useDirection()
 
   return (
-    <div dir={dir}>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div
+      dir={dir}
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'var(--theme-bg)',
+        color: 'var(--theme-text-primary)',
+        transition: 'background-color 0.4s ease, color 0.4s ease',
+      }}
+    >
+      <Navbar />
 
-      <div className="ticks"></div>
+      <PageWrapper>
+        <Routes>
+          {/* Public */}
+          <Route path="/" element={<HomePage />} />
+          <Route path="/shop" element={<ProductListingPage />} />
+          <Route path="/shop/:categorySlug" element={<ProductListingPage />} />
+          <Route path="/products/:slug" element={<ProductDetailPage />} />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+          {/* Auth required */}
+          <Route path="/cart" element={<AuthGuard><CartPage /></AuthGuard>} />
+          <Route path="/checkout" element={<AuthGuard><CheckoutPage /></AuthGuard>} />
+          <Route path="/checkout/success" element={<AuthGuard><OrderSuccessPage /></AuthGuard>} />
+          <Route path="/checkout/cancelled" element={<AuthGuard><OrderCancelledPage /></AuthGuard>} />
+          <Route path="/orders" element={<AuthGuard><OrderHistoryPage /></AuthGuard>} />
+          <Route path="/orders/:id" element={<AuthGuard><OrderDetailPage /></AuthGuard>} />
+          <Route path="/account" element={<AuthGuard><ProfilePage /></AuthGuard>} />
+          <Route path="/account/addresses" element={<AuthGuard><AddressPage /></AuthGuard>} />
+          <Route path="/account/wishlist" element={<AuthGuard><WishlistPage /></AuthGuard>} />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+          {/* Guest only */}
+          <Route path="/login" element={<GuestGuard><LoginPage /></GuestGuard>} />
+          <Route path="/register" element={<GuestGuard><RegisterPage /></GuestGuard>} />
+          <Route path="/forgot-password" element={<GuestGuard><ForgotPasswordPage /></GuestGuard>} />
+
+          {/* Role-gated */}
+          <Route path="/vendor/dashboard" element={<RoleGuard role="vendor"><VendorDashboardPage /></RoleGuard>} />
+          <Route path="/admin/dashboard" element={<RoleGuard role="admin"><AdminDashboardPage /></RoleGuard>} />
+
+          {/* 404 */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </PageWrapper>
+
+      <Footer />
+
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          style: {
+            background: 'var(--theme-surface)',
+            color: 'var(--theme-text-primary)',
+            border: '1px solid var(--theme-border)',
+          },
+        }}
+      />
     </div>
   )
 }
 
-export default App
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <BrowserRouter>
+          <AppInner />
+        </BrowserRouter>
+      </ThemeProvider>
+    </QueryClientProvider>
+  )
+}
