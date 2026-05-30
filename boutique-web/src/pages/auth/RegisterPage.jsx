@@ -101,7 +101,8 @@ export default function RegisterPage() {
     e.preventDefault();
     const isValid = validate(form);
     if (!isValid) return;
-    const { confirmPassword, ...payload } = form;
+    const payload = { ...form };
+    delete payload.confirmPassword;
     payload.password_confirmation = form.confirmPassword;
     register(payload, {
       onSuccess: () => {
