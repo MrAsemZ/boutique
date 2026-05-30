@@ -48,6 +48,10 @@ export default function ProductCard({ product }) {
   );
   const isInWishlist = !!wishlistItem;
 
+  const productName = product.display_name ||
+    (i18n.language === 'ar' ? product.name_ar : product.name) ||
+    product.name;
+
   const imageUrl =
     product.primary_image_url ||
     FASHION_PLACEHOLDERS[(product.id ?? 0) % FASHION_PLACEHOLDERS.length];
@@ -104,7 +108,7 @@ export default function ProductCard({ product }) {
       <div style={{ position: 'relative', height: '220px', overflow: 'hidden', background: 'var(--theme-border)' }}>
         <img
           src={imageUrl}
-          alt={product.display_name}
+          alt={productName}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
 
@@ -134,7 +138,7 @@ export default function ProductCard({ product }) {
           display: '-webkit-box', WebkitLineClamp: 2,
           WebkitBoxOrient: 'vertical', overflow: 'hidden',
         }}>
-          {product.display_name}
+          {productName}
         </p>
 
         {product.brand_name && (

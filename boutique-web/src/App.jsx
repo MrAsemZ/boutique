@@ -27,7 +27,8 @@ import EmailVerifiedPage from './pages/auth/EmailVerifiedPage'
 import SocialCallbackPage from './pages/auth/SocialCallbackPage'
 
 // App pages (stubs — will be replaced per step)
-import { ProductListingPage, ProductDetailPage } from './pages/shopPages'
+import ProductListingPage from './pages/shop/ProductListingPage'
+import { ProductDetailPage } from './pages/shopPages'
 import { CartPage, CheckoutPage, OrderSuccessPage, OrderCancelledPage } from './pages/checkoutPages'
 import { OrderHistoryPage, OrderDetailPage } from './pages/orderPages'
 import { ProfilePage, AddressPage, WishlistPage } from './pages/accountPages'

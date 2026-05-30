@@ -25,7 +25,7 @@ class ProductFilter
         $filter = new static(Product::query()->where('products.status', 'active'));
 
         if ($request->filled('search'))    $filter->search($request->input('search'));
-        if ($request->filled('category'))  $filter->category((int) $request->input('category'));
+        if ($request->filled('category'))  $filter->category($request->input('category'));
         if ($request->filled('price_min')) $filter->priceMin((float) $request->input('price_min'));
         if ($request->filled('price_max')) $filter->priceMax((float) $request->input('price_max'));
         if ($request->filled('size'))      $filter->size($request->input('size'));
@@ -46,12 +46,15 @@ class ProductFilter
         return $this;
     }
 
-    public function category(int $id): static
+    public function category($value): static
     {
-        $category = Category::with('children.children.children')->find($id);
-        if ($category) {
-            $this->query->whereIn('category_id', $this->collectCategoryIds($category));
-        }
+        $category = Category::where('slug', $value)
+            ->orWhere('id', $value)
+            ->first();
+
+        if (!$category) return $this;
+
+        $this->query->whereIn('category_id', $this->collectCategoryIds($category));
         return $this;
     }
 
@@ -112,7 +115,8 @@ class ProductFilter
     private function collectCategoryIds(Category $category): array
     {
         $ids = [$category->id];
-        foreach ($category->children as $child) {
+        $children = Category::where('parent_id', $category->id)->get();
+        foreach ($children as $child) {
             $ids = array_merge($ids, $this->collectCategoryIds($child));
         }
         return $ids;
