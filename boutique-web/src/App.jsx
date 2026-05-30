@@ -16,7 +16,7 @@ import AuthGuard from './components/routing/AuthGuard'
 import GuestGuard from './components/routing/GuestGuard'
 import RoleGuard from './components/routing/RoleGuard'
 
-import HomePage from './pages/HomePage'
+import HomePage from './pages/home/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
 
 // Auth pages (real implementations)

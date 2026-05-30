@@ -99,9 +99,10 @@ export default function RegisterPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Pass current form snapshot explicitly so validate never reads a stale closure
-    if (!validate(form)) return;
+    const isValid = validate(form);
+    if (!isValid) return;
     const { confirmPassword, ...payload } = form;
+    payload.password_confirmation = form.confirmPassword;
     register(payload, {
       onSuccess: () => {
         toast.success(isArabic ? 'تم إنشاء حسابك! تحقق من بريدك الإلكتروني' : 'Account created! Check your email');

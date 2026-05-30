@@ -1,10 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../api/axios';
+import { useAuthStore } from '../../stores/authStore';
 
 export function useWishlist() {
+  const { isAuthenticated } = useAuthStore();
   return useQuery({
     queryKey: ['wishlist'],
     queryFn: () => api.get('/wishlist').then((r) => r.data),
+    enabled: isAuthenticated,
   });
 }
 

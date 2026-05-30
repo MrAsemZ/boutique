@@ -10,6 +10,8 @@ export function ThemeProvider({ children }) {
   const setTheme = useCallback((themeName) => {
     setIsTransitioning(true);
     document.documentElement.classList.add('theme-transitioning');
+    document.documentElement.style.transition =
+      'background-color 0.6s ease, color 0.6s ease, border-color 0.6s ease';
 
     if (themeName === 'default') {
       document.documentElement.removeAttribute('data-theme');
@@ -21,7 +23,7 @@ export function ThemeProvider({ children }) {
     setTimeout(() => {
       document.documentElement.classList.remove('theme-transitioning');
       setIsTransitioning(false);
-    }, 400);
+    }, 600);
   }, []);
 
   const setThemeForCategory = useCallback(

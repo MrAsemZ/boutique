@@ -1,4 +1,6 @@
 const categoryThemes = {
+  'women':   'luxury',      // must come before 'men' — 'women'.includes('men') is true
+  'men':     'streetwear',
   'hoodies': 'warm',
   'sweaters': 'warm',
   'knitwear': 'warm',
