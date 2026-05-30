@@ -3,7 +3,9 @@
     "allow": [
       "PowerShell(Head -50)",
       "PowerShell(cmd /c \"dir c:\\\\wamp64\\\\www\\\\Botique\")",
-      "PowerShell(cmd /c \"dir c:\\\\wamp64\\\\www\\\\Botique\\\\boutique-api\")"
+      "PowerShell(cmd /c \"dir c:\\\\wamp64\\\\www\\\\Botique\\\\boutique-api\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5175)",
+      "Bash(node verify-register.mjs)"
     ]
   }
 }

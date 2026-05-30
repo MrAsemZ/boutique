@@ -9,6 +9,12 @@ body {
   margin: 0;
 }
 
+/* Placeholder color for themed inputs */
+.theme-input::placeholder {
+  color: var(--theme-text-hint);
+  opacity: 1;
+}
+
 /* Default theme */
 :root {
   --theme-bg: #FFFFFF;

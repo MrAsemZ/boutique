@@ -2,7 +2,7 @@ import './i18n/index.js'
 import './styles/rtl.css'
 
 import { QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -18,15 +18,28 @@ import RoleGuard from './components/routing/RoleGuard'
 
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
-import { LoginPage, RegisterPage, ForgotPasswordPage } from './pages/authPages'
+
+// Auth pages (real implementations)
+import LoginPage from './pages/auth/LoginPage'
+import RegisterPage from './pages/auth/RegisterPage'
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage'
+import EmailVerifiedPage from './pages/auth/EmailVerifiedPage'
+import SocialCallbackPage from './pages/auth/SocialCallbackPage'
+
+// App pages (stubs — will be replaced per step)
 import { ProductListingPage, ProductDetailPage } from './pages/shopPages'
 import { CartPage, CheckoutPage, OrderSuccessPage, OrderCancelledPage } from './pages/checkoutPages'
 import { OrderHistoryPage, OrderDetailPage } from './pages/orderPages'
 import { ProfilePage, AddressPage, WishlistPage } from './pages/accountPages'
 import { VendorDashboardPage, AdminDashboardPage } from './pages/adminPages'
 
+// Routes that render their own full-screen layout (no navbar/footer)
+const AUTH_PATHS = new Set(['/login', '/register', '/forgot-password', '/email-verified', '/auth/callback'])
+
 function AppInner() {
   const { dir } = useDirection()
+  const location = useLocation()
+  const isAuthRoute = AUTH_PATHS.has(location.pathname)
 
   return (
     <div
@@ -40,10 +53,17 @@ function AppInner() {
         transition: 'background-color 0.4s ease, color 0.4s ease',
       }}
     >
-      <Navbar />
+      {!isAuthRoute && <Navbar />}
 
       <PageWrapper>
         <Routes>
+          {/* Auth routes — use AuthLayout internally, no shared chrome */}
+          <Route path="/login" element={<GuestGuard><LoginPage /></GuestGuard>} />
+          <Route path="/register" element={<GuestGuard><RegisterPage /></GuestGuard>} />
+          <Route path="/forgot-password" element={<GuestGuard><ForgotPasswordPage /></GuestGuard>} />
+          <Route path="/email-verified" element={<EmailVerifiedPage />} />
+          <Route path="/auth/callback" element={<SocialCallbackPage />} />
+
           {/* Public */}
           <Route path="/" element={<HomePage />} />
           <Route path="/shop" element={<ProductListingPage />} />
@@ -61,11 +81,6 @@ function AppInner() {
           <Route path="/account/addresses" element={<AuthGuard><AddressPage /></AuthGuard>} />
           <Route path="/account/wishlist" element={<AuthGuard><WishlistPage /></AuthGuard>} />
 
-          {/* Guest only */}
-          <Route path="/login" element={<GuestGuard><LoginPage /></GuestGuard>} />
-          <Route path="/register" element={<GuestGuard><RegisterPage /></GuestGuard>} />
-          <Route path="/forgot-password" element={<GuestGuard><ForgotPasswordPage /></GuestGuard>} />
-
           {/* Role-gated */}
           <Route path="/vendor/dashboard" element={<RoleGuard role="vendor"><VendorDashboardPage /></RoleGuard>} />
           <Route path="/admin/dashboard" element={<RoleGuard role="admin"><AdminDashboardPage /></RoleGuard>} />
@@ -75,7 +90,7 @@ function AppInner() {
         </Routes>
       </PageWrapper>
 
-      <Footer />
+      {!isAuthRoute && <Footer />}
 
       <Toaster
         position="top-center"
