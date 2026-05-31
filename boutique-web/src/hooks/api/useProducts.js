@@ -2,11 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 
-export function useProducts(filters = {}) {
+export function useProducts(filters = {}, queryOptions = {}) {
   const { i18n } = useTranslation();
   return useQuery({
     queryKey: ['products', filters, i18n.language],
     queryFn: () => api.get('/products', { params: filters }).then((r) => r.data),
+    ...queryOptions,
   });
 }
 

@@ -9,12 +9,14 @@ use App\Models\OrderItem;
 use App\Models\OrderStatusHistory;
 use App\Models\ProductVariant;
 use App\Models\UserAddress;
+use App\Models\Vendor;
 use App\Models\Voucher;
 use App\Services\PaymentServices\CliQService;
 use App\Services\PaymentServices\CodService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class CheckoutController extends Controller
 {
@@ -47,7 +49,14 @@ class CheckoutController extends Controller
                 abort(response()->json(['success' => false, 'message' => __('messages.orders.empty_cart')], 422));
             }
 
-            // 2. VALIDATE STOCK — lock variants to prevent race conditions
+            // 2. VALIDATE VENDORS — reject if any vendor in the cart is suspended
+            $vendorIds = $cartItems->pluck('variant.product.vendor_id')->unique()->filter();
+            $suspendedVendor = Vendor::whereIn('id', $vendorIds)->where('status', '!=', 'active')->first();
+            if ($suspendedVendor) {
+                abort(response()->json(['success' => false, 'message' => __('messages.checkout.vendor_unavailable')], 422));
+            }
+
+            // 3. VALIDATE STOCK — lock variants to prevent race conditions
             $variantIds     = $cartItems->pluck('product_variant_id');
             $lockedVariants = ProductVariant::whereIn('id', $variantIds)
                 ->lockForUpdate()
@@ -70,7 +79,7 @@ class CheckoutController extends Controller
                 ], 422));
             }
 
-            // 3. VALIDATE ADDRESS belongs to auth user
+            // 4. VALIDATE ADDRESS belongs to auth user
             $address = UserAddress::where('id', $request->address_id)
                 ->where('user_id', $user->id)
                 ->first();
@@ -79,9 +88,9 @@ class CheckoutController extends Controller
                 abort(response()->json(['success' => false, 'message' => __('messages.orders.invalid_address')], 422));
             }
 
-            // 4 + 5. CALCULATE TOTALS & VALIDATE VOUCHER
+            // 5 + 6. CALCULATE TOTALS & VALIDATE VOUCHER
             $subtotal    = 0;
-            $shippingFee = 15.00;
+            $shippingFee = config('boutique.shipping.default_fee');
             $discount    = 0;
             $voucher     = null;
 
@@ -90,7 +99,8 @@ class CheckoutController extends Controller
             }
 
             if ($request->filled('voucher_code')) {
-                $voucher = Voucher::whereRaw('LOWER(code) = ?', [strtolower($request->voucher_code)])
+                $voucher = Voucher::lockForUpdate()
+                    ->whereRaw('LOWER(code) = ?', [strtolower($request->voucher_code)])
                     ->where('is_active', true)
                     ->where(fn($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
                     ->first();
@@ -117,12 +127,12 @@ class CheckoutController extends Controller
 
             $total = round($subtotal + $shippingFee - $discount, 2);
 
-            // 6. CREATE ORDER
+            // 7. CREATE ORDER
             $order = Order::create([
                 'user_id'        => $user->id,
                 'address_id'     => $address->id,
                 'voucher_id'     => $voucher?->id,
-                'order_number'   => 'ORD-' . strtoupper(uniqid()),
+                'order_number'   => 'ORD-' . strtoupper(Str::random(12)),
                 'status'         => 'pending',
                 'subtotal'       => $subtotal,
                 'discount'       => $discount,
@@ -133,7 +143,7 @@ class CheckoutController extends Controller
                 'notes'          => $request->notes,
             ]);
 
-            // 7. CREATE ORDER ITEMS
+            // 8. CREATE ORDER ITEMS
             foreach ($cartItems as $item) {
                 $v = $item->variant;
                 OrderItem::create([
@@ -146,13 +156,13 @@ class CheckoutController extends Controller
                 ]);
             }
 
-            // 8. DECREMENT STOCK
+            // 9. DECREMENT STOCK
             foreach ($cartItems as $item) {
                 $lockedVariants->get($item->product_variant_id)
                     ->decrement('stock', $item->quantity);
             }
 
-            // 9. LOG INITIAL STATUS
+            // 10. LOG INITIAL STATUS
             OrderStatusHistory::create([
                 'order_id'    => $order->id,
                 'changed_by'  => $user->id,
@@ -161,12 +171,12 @@ class CheckoutController extends Controller
                 'notes'       => 'Order placed',
             ]);
 
-            // 10. APPLY VOUCHER
+            // 11. APPLY VOUCHER
             if ($voucher) {
                 $voucher->increment('used_count');
             }
 
-            // 11. CLEAR CART
+            // 12. CLEAR CART
             CartItem::where('user_id', $user->id)->delete();
 
             return $order;

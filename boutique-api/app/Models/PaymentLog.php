@@ -18,6 +18,8 @@ class PaymentLog extends Model
         'notes',
     ];
 
+    protected $hidden = ['raw_payload'];
+
     protected $casts = [
         'raw_payload' => 'array',
         'amount'      => 'decimal:2',

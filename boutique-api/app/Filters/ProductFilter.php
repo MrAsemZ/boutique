@@ -112,12 +112,14 @@ class ProductFilter
     }
 
     /** Recursively collect a category + all its descendants. */
-    private function collectCategoryIds(Category $category): array
+    private function collectCategoryIds(Category $category, array $visited = []): array
     {
+        if (in_array($category->id, $visited)) return [];
+        $visited[] = $category->id;
         $ids = [$category->id];
         $children = Category::where('parent_id', $category->id)->get();
         foreach ($children as $child) {
-            $ids = array_merge($ids, $this->collectCategoryIds($child));
+            $ids = array_merge($ids, $this->collectCategoryIds($child, $visited));
         }
         return $ids;
     }

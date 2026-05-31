@@ -22,7 +22,7 @@ class UserController extends Controller
         $data = $request->validate([
             'name'            => 'sometimes|string|max:255',
             'phone'           => 'sometimes|string|max:20',
-            'gender'          => 'sometimes|string|in:male,female',
+            'gender'          => 'sometimes|string|in:male,female,prefer_not_to_say',
             'date_of_birth'   => 'sometimes|date|before:today',
             'preferred_theme' => 'sometimes|string|in:light,dark',
         ]);
@@ -52,7 +52,7 @@ class UserController extends Controller
             ], 422);
         }
 
-        $user->update(['password' => bcrypt($request->password)]);
+        $user->update(['password' => Hash::make($request->password)]);
 
         // Revoke all other tokens — keep the current session active
         $user->tokens()->where('id', '!=', $user->currentAccessToken()->id)->delete();

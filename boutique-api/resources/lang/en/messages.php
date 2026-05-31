@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'checkout' => [
+        'vendor_unavailable' => 'One of the vendors in your cart is currently unavailable.',
+    ],
+
     'cart' => [
         'added'       => 'Item added to cart.',
         'updated'     => 'Cart updated.',

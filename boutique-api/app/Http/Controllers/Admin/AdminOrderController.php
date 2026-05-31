@@ -74,6 +74,10 @@ class AdminOrderController extends Controller
                 $uniqueVendors = collect();
 
                 foreach ($order->items as $item) {
+                    if (VendorBalance::where('order_item_id', $item->id)->exists()) {
+                        continue;
+                    }
+
                     $vendor           = $item->vendor;
                     $gross            = (float) $item->total_price;
                     $commissionRate   = $vendor ? (float) $vendor->commission_rate : 0;

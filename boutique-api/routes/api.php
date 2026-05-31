@@ -192,9 +192,11 @@ Route::prefix('webhooks')->name('webhooks.')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| DEV: CliQ payment simulator (remove before production)
+| DEV: CliQ payment simulator — local environment only
 |--------------------------------------------------------------------------
 */
-Route::post('payments/cliq/simulate/{cliqRequestId}', [PaymentController::class, 'cliqSimulate'])
-    ->middleware('auth:sanctum')
-    ->name('payments.cliq.simulate');
+if (app()->isLocal()) {
+    Route::post('payments/cliq/simulate/{cliqRequestId}', [PaymentController::class, 'cliqSimulate'])
+        ->middleware('auth:sanctum')
+        ->name('payments.cliq.simulate');
+}

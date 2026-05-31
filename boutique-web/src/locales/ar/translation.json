@@ -3,7 +3,7 @@
     "home": "الرئيسية",
     "shop": "المتجر",
     "cart": "السلة",
-    "wishlist": "قائمة الأمنيات",
+    "wishlist": "المفضلة",
     "orders": "طلباتي",
     "account": "حسابي",
     "logout": "تسجيل الخروج",
@@ -19,7 +19,7 @@
   },
   "product": {
     "add_to_cart": "أضف إلى السلة",
-    "add_to_wishlist": "أضف إلى الأمنيات",
+    "add_to_wishlist": "أضف إلى المفضلة",
     "out_of_stock": "غير متوفر",
     "size": "المقاس",
     "color": "اللون",

@@ -46,7 +46,7 @@ class CliQService
         // Verify signature
         $signature      = $payload['signature'] ?? '';
         $data           = $payload['data'] ?? [];
-        $expectedSig    = hash_hmac('sha256', json_encode($data), env('CLIQ_WEBHOOK_SECRET', ''));
+        $expectedSig    = hash_hmac('sha256', json_encode($data), config('services.cliq.webhook_secret'));
 
         if (! hash_equals($expectedSig, $signature)) {
             Log::warning('CliQ webhook signature mismatch', [
@@ -112,19 +112,17 @@ class CliQService
         return true;
     }
 
-    // FOR DEVELOPMENT / TESTING ONLY — Remove this method before production
+    // FOR DEVELOPMENT / TESTING ONLY — Local environment only
     public function simulateApproval(string $cliqRequestId): array
     {
-        $log = PaymentLog::where('transaction_id', $cliqRequestId)->first();
+        $log = PaymentLog::where('transaction_id', $cliqRequestId)->firstOrFail();
 
-        if (! $log) {
-            return ['success' => false, 'message' => 'CliQ request ID not found.'];
-        }
-
-        $order = Order::where('cliq_request_id', $cliqRequestId)->first();
+        $order = Order::where('cliq_request_id', $cliqRequestId)
+            ->where('user_id', auth()->id())
+            ->first();
 
         if (! $order) {
-            return ['success' => false, 'message' => 'Order not found for this CliQ request.'];
+            return ['success' => false, 'message' => 'Order not found or does not belong to you.'];
         }
 
         $mockPayload = [
@@ -132,7 +130,7 @@ class CliQService
                 'cliq_request_id' => $cliqRequestId,
                 'amount'          => (float) $order->total,
                 'status'          => 'approved',
-            ]), env('CLIQ_WEBHOOK_SECRET', '')),
+            ]), config('services.cliq.webhook_secret')),
             'data' => [
                 'cliq_request_id' => $cliqRequestId,
                 'amount'          => (float) $order->total,

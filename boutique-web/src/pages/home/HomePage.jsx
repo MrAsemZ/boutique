@@ -71,6 +71,22 @@ function getCatGradient(slug = '') {
   return CAT_GRADIENTS[key] ?? DEFAULT_GRADIENT;
 }
 
+const CATEGORY_TAGLINES = {
+  men:         { ar: 'أناقة الرجل العصري',           en: "Modern men's style"            },
+  women:       { ar: 'جمال وأناقة لا حدود لها',      en: 'Timeless feminine elegance'    },
+  kids:        { ar: 'ملابس مريحة وجميلة لأطفالك',  en: 'Colorful & fun for little ones' },
+  accessories: { ar: 'اكمل إطلالتك بلمسة مميزة',    en: 'Complete your look'             },
+};
+
+function getTagline(slug = '', lang) {
+  if (!slug) return lang === 'ar' ? 'تسوق الآن' : 'Shop Now';
+  if (slug.includes('women'))       return CATEGORY_TAGLINES['women'][lang];
+  if (slug.includes('men'))         return CATEGORY_TAGLINES['men'][lang];
+  if (slug.includes('kids'))        return CATEGORY_TAGLINES['kids'][lang];
+  if (slug.includes('accessories')) return CATEGORY_TAGLINES['accessories'][lang];
+  return lang === 'ar' ? 'تسوق الآن' : 'Shop Now';
+}
+
 const CATEGORY_IMAGES = {
   women:       'https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?w=600&h=400&fit=crop',
   men:         'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=600&h=400&fit=crop',
@@ -162,8 +178,9 @@ function HeroSection({ isArabic }) {
 
 function CategoryCard({ category, isArabic, index, onHover, onLeave, onNavigate }) {
   const name = isArabic
-    ? (category.display_name_ar ?? category.display_name)
-    : (category.display_name_en ?? category.display_name);
+    ? (category.name_ar ?? category.display_name)
+    : (category.name ?? category.display_name_en ?? category.display_name);
+  const tagline = getTagline(category.slug, isArabic ? 'ar' : 'en');
 
   return (
     <div
@@ -197,7 +214,7 @@ function CategoryCard({ category, isArabic, index, onHover, onLeave, onNavigate 
           {name}
         </p>
         <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.75)' }}>
-          {isArabic ? 'تسوق الآن' : 'Shop Now'}
+          {tagline}
         </p>
       </div>
     </div>
