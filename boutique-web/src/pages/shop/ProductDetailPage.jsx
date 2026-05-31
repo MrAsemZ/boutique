@@ -298,6 +298,16 @@ export default function ProductDetailPage() {
   const [quantity,       setQuantity]       = useState(1);
   const [mainImageIdx,   setMainImageIdx]   = useState(0);
   const [descExpanded,   setDescExpanded]   = useState(false);
+  const [prevSlug,       setPrevSlug]       = useState(slug);
+
+  // Reset all selections when navigating to a different product (during render, not in an effect)
+  if (prevSlug !== slug) {
+    setPrevSlug(slug);
+    setSelectedSize(null);
+    setSelectedColor(null);
+    setQuantity(1);
+    setMainImageIdx(0);
+  }
 
   // ── Data fetching ────────────────────────────────────────────────────────
   const { data: rawProduct, isLoading, isError, error } = useProduct(slug);
@@ -351,10 +361,24 @@ export default function ProductDetailPage() {
   const wishlistItem  = wishlistItems.find(w => w.variant_id === selectedVariant?.id || w.product_id === product?.id);
   const isInWishlist  = !!wishlistItem;
 
+  const wishlistVariantIds = new Set(wishlistItems.map(i => i.variant_id).filter(Boolean));
+  const handleRelatedWishlistToggle = (relatedProduct) => {
+    const variantId = relatedProduct.variants?.[0]?.id;
+    if (!variantId) return;
+    const isIn = wishlistVariantIds.has(variantId);
+    if (isIn) {
+      const wItem = wishlistItems.find(i => i.variant_id === variantId);
+      if (wItem) removeFromWishlist(wItem.id);
+    } else {
+      addToWishlist({ product_variant_id: variantId });
+    }
+  };
+
   const pName = productName(product, isArabic);
   const pDesc = product?.display_description || (isArabic ? product?.description_ar : product?.description) || product?.description || '';
 
   // ── Effects ──────────────────────────────────────────────────────────────
+
   useEffect(() => {
     if (!product) return;
     if (catSlug) setThemeForCategory(catSlug);
@@ -647,7 +671,14 @@ export default function ProductDetailPage() {
           {relatedProducts.length > 0 && (
             <SectionWrapper title="قد يعجبك أيضاً" titleEn="You might also like">
               <div className="pd-related-grid">
-                {relatedProducts.map(p => <ProductCard key={p.id} product={p} />)}
+                {relatedProducts.map(p => (
+                  <ProductCard
+                    key={p.id}
+                    product={p}
+                    isInWishlist={wishlistVariantIds.has(p.variants?.[0]?.id)}
+                    onWishlistToggle={handleRelatedWishlistToggle}
+                  />
+                ))}
               </div>
             </SectionWrapper>
           )}

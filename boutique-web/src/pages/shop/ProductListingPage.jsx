@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AdjustmentsHorizontalIcon, XMarkIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
@@ -6,6 +6,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useCategories } from '../../hooks/api/useCategories';
 import { useProducts } from '../../hooks/api/useProducts';
 import { useFilters } from '../../hooks/useFilters';
+import { useWishlist, useAddToWishlist, useRemoveFromWishlist } from '../../hooks/api/useWishlist';
 import ProductCard from '../../components/product/ProductCard';
 import SkeletonCard from '../../components/common/SkeletonCard';
 import FiltersSidebar, { COLORS, MATERIALS } from '../../components/shop/FiltersSidebar';
@@ -281,7 +282,32 @@ export default function ProductListingPage() {
   const { data: categoriesData } = useCategories();
   const categories = Array.isArray(categoriesData) ? categoriesData : (categoriesData?.data ?? []);
 
-  const { data, isLoading, isError, refetch } = useProducts(buildApiParams(filters));
+  const stableFilters = useMemo(() => buildApiParams(filters), [
+    filters.search, filters.category, filters.price_min,
+    filters.price_max, filters.sizes, filters.colors,
+    filters.materials, filters.sort, filters.page,
+  ]);
+
+  const { data, isLoading, isError, refetch } = useProducts(stableFilters);
+
+  const { data: wishlistData } = useWishlist();
+  const { mutate: addToWishlist } = useAddToWishlist();
+  const { mutate: removeFromWishlist } = useRemoveFromWishlist();
+
+  const wishlistItems = Array.isArray(wishlistData) ? wishlistData : (wishlistData?.data ?? []);
+  const wishlistVariantIds = new Set(wishlistItems.map(i => i.variant_id).filter(Boolean));
+
+  const handleWishlistToggle = (product) => {
+    const variantId = product.variants?.[0]?.id;
+    if (!variantId) return;
+    const isIn = wishlistVariantIds.has(variantId);
+    if (isIn) {
+      const wItem = wishlistItems.find(i => i.variant_id === variantId);
+      if (wItem) removeFromWishlist(wItem.id);
+    } else {
+      addToWishlist({ product_variant_id: variantId });
+    }
+  };
 
   const products  = Array.isArray(data) ? data : (data?.data ?? []);
   const meta      = data?.meta ?? null;
@@ -412,7 +438,14 @@ export default function ProductListingPage() {
           ) : (
             <>
               <div className="shop-grid">
-                {products.map(p => <ProductCard key={p.id} product={p} />)}
+                {products.map(p => (
+                  <ProductCard
+                    key={p.id}
+                    product={p}
+                    isInWishlist={wishlistVariantIds.has(p.variants?.[0]?.id)}
+                    onWishlistToggle={handleWishlistToggle}
+                  />
+                ))}
               </div>
               <Pagination
                 current={filters.page} last={lastPage}

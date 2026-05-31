@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useCategories } from '../../hooks/api/useCategories';
 import { useFeaturedProducts, useProducts } from '../../hooks/api/useProducts';
+import { useWishlist, useAddToWishlist, useRemoveFromWishlist } from '../../hooks/api/useWishlist';
 import SectionWrapper from '../../components/common/SectionWrapper';
 import ProductCard from '../../components/product/ProductCard';
 import SkeletonCard from '../../components/common/SkeletonCard';
@@ -302,6 +303,25 @@ export default function HomePage() {
     refetch: refetchNew,
   } = useProducts({ sort: 'newest', per_page: 8 });
 
+  const { data: wishlistData } = useWishlist();
+  const { mutate: addToWishlist } = useAddToWishlist();
+  const { mutate: removeFromWishlist } = useRemoveFromWishlist();
+
+  const wishlistItems = Array.isArray(wishlistData) ? wishlistData : (wishlistData?.data ?? []);
+  const wishlistVariantIds = new Set(wishlistItems.map(i => i.variant_id).filter(Boolean));
+
+  const handleWishlistToggle = (product) => {
+    const variantId = product.variants?.[0]?.id;
+    if (!variantId) return;
+    const isIn = wishlistVariantIds.has(variantId);
+    if (isIn) {
+      const wItem = wishlistItems.find(i => i.variant_id === variantId);
+      if (wItem) removeFromWishlist(wItem.id);
+    } else {
+      addToWishlist({ product_variant_id: variantId });
+    }
+  };
+
   const categories    = Array.isArray(categoriesData)   ? categoriesData   : (categoriesData?.data   ?? []);
   const featured      = Array.isArray(featuredData)     ? featuredData     : (featuredData?.data     ?? []);
   const newArrivals   = Array.isArray(newArrivalsData)  ? newArrivalsData  : (newArrivalsData?.data  ?? []);
@@ -362,7 +382,14 @@ export default function HomePage() {
           </p>
         ) : (
           <div className="home-product-grid">
-            {featured.slice(0, 12).map((p) => <ProductCard key={p.id} product={p} />)}
+            {featured.slice(0, 12).map((p) => (
+              <ProductCard
+                key={p.id}
+                product={p}
+                isInWishlist={wishlistVariantIds.has(p.variants?.[0]?.id)}
+                onWishlistToggle={handleWishlistToggle}
+              />
+            ))}
           </div>
         )}
       </SectionWrapper>
@@ -383,7 +410,14 @@ export default function HomePage() {
           <ErrorRetry isArabic={isArabic} onRetry={refetchNew} />
         ) : (
           <div className="home-new-scroll">
-            {newArrivals.map((p) => <ProductCard key={p.id} product={p} />)}
+            {newArrivals.map((p) => (
+              <ProductCard
+                key={p.id}
+                product={p}
+                isInWishlist={wishlistVariantIds.has(p.variants?.[0]?.id)}
+                onWishlistToggle={handleWishlistToggle}
+              />
+            ))}
           </div>
         )}
       </SectionWrapper>

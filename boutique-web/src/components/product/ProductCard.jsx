@@ -7,7 +7,6 @@ import { toast } from 'react-hot-toast';
 import SaleBadge from '../common/SaleBadge';
 import { useAuthStore } from '../../stores/authStore';
 import { useAddToCart } from '../../hooks/api/useCart';
-import { useWishlist, useAddToWishlist, useRemoveFromWishlist } from '../../hooks/api/useWishlist';
 import { useIntersectionObserver } from '../../hooks/useIntersectionObserver';
 import { formatPrice } from '../../utils/formatPrice';
 
@@ -22,7 +21,7 @@ const FASHION_PLACEHOLDERS = [
   'https://images.unsplash.com/photo-1485968579580-b6d095142e6e?w=400&h=500&fit=crop',
 ];
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, isInWishlist = false, onWishlistToggle = null }) {
   const { i18n } = useTranslation();
   const isArabic = i18n.language === 'ar';
   const navigate = useNavigate();
@@ -30,23 +29,9 @@ export default function ProductCard({ product }) {
   const [hovered, setHovered] = useState(false);
 
   const { mutate: addToCart, isPending: cartLoading } = useAddToCart();
-  const { data: wishlistData } = useWishlist();
-  const { mutate: addToWishlist } = useAddToWishlist();
-  const { mutate: removeFromWishlist } = useRemoveFromWishlist();
 
   const cardRef = useRef(null);
   const isVisible = useIntersectionObserver(cardRef);
-
-  const wishlistItems = Array.isArray(wishlistData)
-    ? wishlistData
-    : (wishlistData?.data ?? []);
-
-  const wishlistItem = wishlistItems.find(
-    (item) =>
-      item.variant_id === product.variants?.[0]?.id ||
-      item.product_id === product.id
-  );
-  const isInWishlist = !!wishlistItem;
 
   const productName = product.display_name ||
     (i18n.language === 'ar' ? product.name_ar : product.name) ||
@@ -74,14 +59,11 @@ export default function ProductCard({ product }) {
     );
   };
 
-  const handleWishlist = (e) => {
+  const handleWishlistClick = (e) => {
+    e.preventDefault();
     e.stopPropagation();
     if (!isAuthenticated) { navigate('/login'); return; }
-    if (isInWishlist) {
-      removeFromWishlist(wishlistItem.id ?? product.id);
-    } else {
-      addToWishlist({ product_id: product.id });
-    }
+    if (onWishlistToggle) onWishlistToggle(product);
   };
 
   return (
@@ -109,13 +91,14 @@ export default function ProductCard({ product }) {
         <img
           src={imageUrl}
           alt={productName}
+          loading="lazy"
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
 
         {product.sale_price && <SaleBadge />}
 
         <button
-          onClick={handleWishlist}
+          onClick={handleWishlistClick}
           style={{
             position: 'absolute', top: '8px', insetInlineEnd: '8px',
             width: '32px', height: '32px', borderRadius: '50%',

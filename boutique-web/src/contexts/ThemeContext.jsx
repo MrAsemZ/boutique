@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { getThemeForCategory } from '../themes/categoryThemes';
 
 const ThemeContext = createContext(null);
@@ -33,8 +33,15 @@ export function ThemeProvider({ children }) {
     [setTheme]
   );
 
+  const value = useMemo(() => ({
+    currentTheme,
+    setTheme,
+    setThemeForCategory,
+    isTransitioning,
+  }), [currentTheme, isTransitioning, setTheme, setThemeForCategory]);
+
   return (
-    <ThemeContext.Provider value={{ currentTheme, isTransitioning, setTheme, setThemeForCategory }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );

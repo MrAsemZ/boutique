@@ -151,8 +151,8 @@ export default function FiltersSidebar({
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
             width: '100%', padding: '8px 16px', borderRadius: '50px',
-            border: '1px solid var(--theme-badge-sale)', background: 'transparent',
-            color: 'var(--theme-badge-sale)',
+            border: '1px solid var(--theme-accent)', background: 'transparent',
+            color: 'var(--theme-accent)',
             fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer', margin: '12px 0 4px',
           }}
         >
