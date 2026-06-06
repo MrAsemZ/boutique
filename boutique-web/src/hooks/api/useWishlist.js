@@ -14,7 +14,10 @@ export function useWishlist() {
 export function useAddToWishlist() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data) => api.post('/wishlist', data).then((r) => r.data),
+    mutationFn: (data) =>
+      api.post('/wishlist', {
+        product_variant_id: data.product_variant_id ?? data.variantId,
+      }).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['wishlist'] }),
   });
 }

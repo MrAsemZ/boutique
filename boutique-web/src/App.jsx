@@ -26,15 +26,19 @@ import ForgotPasswordPage from './pages/auth/ForgotPasswordPage'
 import EmailVerifiedPage from './pages/auth/EmailVerifiedPage'
 import SocialCallbackPage from './pages/auth/SocialCallbackPage'
 
-// App pages (stubs — will be replaced per step)
+// App pages
 import ProductListingPage from './pages/shop/ProductListingPage'
 import ProductDetailPage from './pages/shop/ProductDetailPage'
 import CartPage from './pages/cart/CartPage'
 import CheckoutPage from './pages/checkout/CheckoutPage'
 import OrderSuccessPage from './pages/checkout/OrderSuccessPage'
 import { OrderCancelledPage } from './pages/checkoutPages'
-import { OrderHistoryPage, OrderDetailPage } from './pages/orderPages'
-import { ProfilePage, AddressPage, WishlistPage } from './pages/accountPages'
+import OrderHistoryPage from './pages/orders/OrderHistoryPage'
+import OrderDetailPage from './pages/orders/OrderDetailPage'
+import ProfilePage from './pages/account/ProfilePage'
+import AddressPage from './pages/account/AddressPage'
+import WishlistPage from './pages/account/WishlistPage'
+import ChangePasswordPage from './pages/account/ChangePasswordPage'
 import { VendorDashboardPage, AdminDashboardPage } from './pages/adminPages'
 
 // Routes that render their own full-screen layout (no navbar/footer)
@@ -84,6 +88,7 @@ function AppInner() {
           <Route path="/account" element={<AuthGuard><ProfilePage /></AuthGuard>} />
           <Route path="/account/addresses" element={<AuthGuard><AddressPage /></AuthGuard>} />
           <Route path="/account/wishlist" element={<AuthGuard><WishlistPage /></AuthGuard>} />
+          <Route path="/account/password" element={<AuthGuard><ChangePasswordPage /></AuthGuard>} />
 
           {/* Role-gated */}
           <Route path="/vendor/dashboard" element={<RoleGuard role="vendor"><VendorDashboardPage /></RoleGuard>} />

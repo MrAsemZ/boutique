@@ -3,10 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { HeartIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
-import { toast } from 'react-hot-toast';
 import SaleBadge from '../common/SaleBadge';
 import { useAuthStore } from '../../stores/authStore';
-import { useAddToCart } from '../../hooks/api/useCart';
 import { useIntersectionObserver } from '../../hooks/useIntersectionObserver';
 import { formatPrice } from '../../utils/formatPrice';
 
@@ -23,13 +21,10 @@ const FASHION_PLACEHOLDERS = [
 ];
 
 export default function ProductCard({ product, isInWishlist = false, onWishlistToggle = null }) {
-  const { i18n } = useTranslation();
-  const isArabic = i18n.language === 'ar';
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
   const [hovered, setHovered] = useState(false);
-
-  const { mutate: addToCart, isPending: cartLoading } = useAddToCart();
 
   const cardRef = useRef(null);
   const isVisible = useIntersectionObserver(cardRef);
@@ -47,18 +42,11 @@ export default function ProductCard({ product, isInWishlist = false, onWishlistT
     ? Math.round(((product.base_price - product.sale_price) / product.base_price) * 100)
     : 0;
 
-  const handleAddToCart = (e) => {
+  const handleCardClick = () => navigate(`/products/${product.slug}`);
+
+  const handleViewItem = (e) => {
     e.stopPropagation();
-    const variant = product.variants?.[0];
-    if (!variant) return;
-    addToCart(
-      { variant_id: variant.id, quantity: 1, product, variant },
-      {
-        onSuccess: () => toast.success(isArabic ? 'تمت الإضافة للسلة' : 'Added to cart'),
-        onError: (err) =>
-          toast.error(err?.response?.data?.message || (isArabic ? 'حدث خطأ' : 'Failed to add')),
-      }
-    );
+    navigate(`/products/${product.slug}`);
   };
 
   const handleWishlistClick = (e) => {
@@ -71,7 +59,7 @@ export default function ProductCard({ product, isInWishlist = false, onWishlistT
   return (
     <div
       ref={cardRef}
-      onClick={() => navigate(`/products/${product.slug}`)}
+      onClick={handleCardClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -153,21 +141,26 @@ export default function ProductCard({ product, isInWishlist = false, onWishlistT
         </div>
 
         <button
-          onClick={handleAddToCart}
-          disabled={cartLoading}
+          onClick={handleViewItem}
           style={{
             width: '100%', padding: '10px', borderRadius: '50px',
-            border: 'none',
-            background: cartLoading ? 'var(--theme-border)' : 'var(--theme-accent)',
-            color: cartLoading ? 'var(--theme-text-hint)' : 'var(--theme-bg)',
+            border: '1.5px solid var(--theme-accent)',
+            background: 'transparent',
+            color: 'var(--theme-accent)',
             fontSize: '0.875rem', fontWeight: 600,
-            cursor: cartLoading ? 'not-allowed' : 'pointer',
-            transition: 'background 0.2s',
+            cursor: 'pointer',
+            transition: 'background 0.15s, color 0.15s',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'var(--theme-accent)';
+            e.currentTarget.style.color = 'var(--theme-surface)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent';
+            e.currentTarget.style.color = 'var(--theme-accent)';
           }}
         >
-          {cartLoading
-            ? (isArabic ? 'جارٍ...' : 'Adding...')
-            : (isArabic ? 'أضف للسلة' : 'Add to Cart')}
+          {t('product.view_item')}
         </button>
       </div>
     </div>

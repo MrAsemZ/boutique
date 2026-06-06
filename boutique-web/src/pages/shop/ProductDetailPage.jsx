@@ -367,7 +367,7 @@ export default function ProductDetailPage() {
 
   const wishlistVariantIds = new Set(wishlistItems.map(i => i.variant?.id).filter(Boolean));
   const handleRelatedWishlistToggle = (relatedProduct) => {
-    const variantId = relatedProduct.variants?.[0]?.id;
+    const variantId = relatedProduct.first_variant_id ?? relatedProduct.variants?.[0]?.id;
     if (!variantId) return;
     const isIn = wishlistVariantIds.has(variantId);
     if (isIn) {
@@ -418,8 +418,15 @@ export default function ProductDetailPage() {
 
   const handleWishlist = () => {
     if (!isAuthenticated) { navigate('/login'); return; }
-    if (isInWishlist) removeFromWishlist(wishlistItem.id ?? product.id);
-    else              addToWishlist({ product_id: product.id });
+    if (isInWishlist) {
+      removeFromWishlist(wishlistItem.id);
+    } else {
+      if (!selectedVariant) {
+        toast.error(isArabic ? 'الرجاء اختيار المقاس واللون أولاً' : 'Please select size and color first');
+        return;
+      }
+      addToWishlist({ product_variant_id: selectedVariant.id });
+    }
   };
 
   const handleShare = async () => {
@@ -683,7 +690,7 @@ export default function ProductDetailPage() {
                   <ProductCard
                     key={p.id}
                     product={p}
-                    isInWishlist={wishlistVariantIds.has(p.variants?.[0]?.id)}
+                    isInWishlist={wishlistVariantIds.has(p.first_variant_id ?? p.variants?.[0]?.id)}
                     onWishlistToggle={handleRelatedWishlistToggle}
                   />
                 ))}
