@@ -43,6 +43,9 @@ import VendorDashboardPage from './pages/vendor/VendorDashboardPage'
 import VendorOrdersPage from './pages/vendor/VendorOrdersPage'
 import VendorBalancePage from './pages/vendor/VendorBalancePage'
 import VendorApplyPage from './pages/vendor/VendorApplyPage'
+import VendorProductsPage from './pages/vendor/VendorProductsPage'
+import VendorProductFormPage from './pages/vendor/VendorProductFormPage'
+import VendorProfilePage from './pages/vendor/VendorProfilePage'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
 import AdminOrdersPage from './pages/admin/AdminOrdersPage'
 import AdminVendorsPage from './pages/admin/AdminVendorsPage'
@@ -107,6 +110,10 @@ function AppInner() {
           <Route path="/vendor/dashboard" element={<AuthGuard><RoleGuard role="vendor"><VendorDashboardPage /></RoleGuard></AuthGuard>} />
           <Route path="/vendor/orders" element={<AuthGuard><RoleGuard role="vendor"><VendorOrdersPage /></RoleGuard></AuthGuard>} />
           <Route path="/vendor/balance" element={<AuthGuard><RoleGuard role="vendor"><VendorBalancePage /></RoleGuard></AuthGuard>} />
+          <Route path="/vendor/products" element={<AuthGuard><RoleGuard role="vendor"><VendorProductsPage /></RoleGuard></AuthGuard>} />
+          <Route path="/vendor/products/new" element={<AuthGuard><RoleGuard role="vendor"><VendorProductFormPage /></RoleGuard></AuthGuard>} />
+          <Route path="/vendor/products/:id/edit" element={<AuthGuard><RoleGuard role="vendor"><VendorProductFormPage /></RoleGuard></AuthGuard>} />
+          <Route path="/vendor/profile" element={<AuthGuard><RoleGuard role="vendor"><VendorProfilePage /></RoleGuard></AuthGuard>} />
 
           {/* Admin */}
           <Route path="/admin/dashboard" element={<AuthGuard><RoleGuard role="admin"><AdminDashboardPage /></RoleGuard></AuthGuard>} />

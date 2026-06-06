@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminPayoutController;
+use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminVoucherController;
 use App\Http\Controllers\Admin\VendorManagementController;
@@ -20,6 +21,8 @@ use App\Http\Controllers\User\UserController;
 use App\Http\Controllers\Vendor\VendorApplicationController;
 use App\Http\Controllers\Vendor\VendorBalanceController;
 use App\Http\Controllers\Vendor\VendorOrderController;
+use App\Http\Controllers\Vendor\VendorProductController;
+use App\Http\Controllers\Vendor\VendorProfileController;
 use App\Http\Controllers\Voucher\VoucherController;
 use App\Http\Controllers\Wishlist\WishlistController;
 use Illuminate\Support\Facades\Route;
@@ -159,6 +162,24 @@ Route::middleware(['auth:sanctum', 'role:vendor'])->prefix('vendor')->name('vend
     Route::get('orders', [VendorOrderController::class, 'index'])->name('orders.index');
     Route::put('orders/{id}/status', [VendorOrderController::class, 'updateStatus'])->name('orders.status');
     Route::get('balance', [VendorBalanceController::class, 'balance'])->name('balance');
+
+    // Vendor store profile
+    Route::get('profile', [VendorProfileController::class, 'show'])->name('profile.show');
+    Route::put('profile', [VendorProfileController::class, 'update'])->name('profile.update');
+
+    // Product management
+    Route::get('products', [VendorProductController::class, 'index'])->name('products.index');
+    Route::post('products', [VendorProductController::class, 'store'])->name('products.store');
+    Route::get('products/{id}', [VendorProductController::class, 'show'])->name('products.show');
+    Route::put('products/{id}', [VendorProductController::class, 'update'])->name('products.update');
+    Route::delete('products/{id}', [VendorProductController::class, 'destroy'])->name('products.destroy');
+
+    Route::post('products/{id}/variants', [VendorProductController::class, 'addVariant'])->name('products.variants.store');
+    Route::put('products/{id}/variants/{vid}', [VendorProductController::class, 'updateVariant'])->name('products.variants.update');
+    Route::delete('products/{id}/variants/{vid}', [VendorProductController::class, 'deleteVariant'])->name('products.variants.destroy');
+
+    Route::post('products/{id}/images', [VendorProductController::class, 'addImage'])->name('products.images.store');
+    Route::delete('products/{id}/images/{iid}', [VendorProductController::class, 'deleteImage'])->name('products.images.destroy');
 });
 
 /*
@@ -189,6 +210,9 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('admin.
     Route::post('vouchers', [AdminVoucherController::class, 'store'])->name('vouchers.store');
     Route::put('vouchers/{id}', [AdminVoucherController::class, 'update'])->name('vouchers.update');
     Route::delete('vouchers/{id}', [AdminVoucherController::class, 'destroy'])->name('vouchers.destroy');
+
+    // Products
+    Route::put('products/{id}/status', [AdminProductController::class, 'updateStatus'])->name('products.status');
 });
 
 /*

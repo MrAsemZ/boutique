@@ -20,11 +20,12 @@ class UserController extends Controller
     public function updateProfile(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'name'            => 'sometimes|string|max:255',
-            'phone'           => 'sometimes|string|max:20',
-            'gender'          => 'sometimes|string|in:male,female,prefer_not_to_say',
-            'date_of_birth'   => 'sometimes|date|before:today',
-            'preferred_theme' => 'sometimes|string|in:light,dark',
+            'name'             => 'sometimes|string|max:255',
+            'phone'            => 'sometimes|nullable|string|max:20',
+            'gender'           => 'sometimes|string|in:male,female,prefer_not_to_say',
+            'date_of_birth'    => 'sometimes|date|before:today',
+            'preferred_theme'  => 'sometimes|nullable|string|in:default,warm,luxury,streetwear,kids,accessories,light,dark',
+            'preferred_locale' => 'sometimes|string|in:ar,en',
         ]);
 
         $request->user()->update($data);

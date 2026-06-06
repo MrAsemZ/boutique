@@ -16,12 +16,13 @@ class RegisterController extends Controller
     public function register(RegisterRequest $request): JsonResponse
     {
         $user = User::create([
-            'name'         => $request->name,
-            'email'        => $request->email,
-            'password'     => $request->password,
-            'phone'        => $request->phone,
-            'role'         => 'customer',
-            'is_active'    => true,
+            'name'           => $request->name,
+            'email'          => $request->email,
+            'password'       => $request->password,
+            'phone'          => $request->phone,
+            'gender'         => $request->gender,
+            'role'           => 'customer',
+            'is_active'      => true,
             'email_verified' => false,
         ]);
 

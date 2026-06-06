@@ -352,6 +352,7 @@
   "vendor": {
     "dashboard": "Dashboard",
     "orders": "My Orders",
+    "products": "My Products",
     "balance": "My Earnings",
     "store": "My Store",
     "total_earned": "Total Earned",

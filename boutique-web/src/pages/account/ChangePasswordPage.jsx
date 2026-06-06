@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { useUpdatePassword } from '../../hooks/api/useProfile';
+import { useAuthStore } from '../../stores/authStore';
 import AccountLayout from '../../components/layout/AccountLayout';
 
 function getStrength(pw) {
@@ -91,6 +92,7 @@ function PasswordField({ label, value, onChange, error }) {
 export default function ChangePasswordPage() {
   const { t } = useTranslation();
   const updatePassword = useUpdatePassword();
+  const { user, login } = useAuthStore();
   const [form, setForm] = useState({ current_password: '', password: '', password_confirmation: '' });
   const [errors, setErrors] = useState({});
 
@@ -106,7 +108,11 @@ export default function ChangePasswordPage() {
     setErrors({});
 
     updatePassword.mutate(form, {
-      onSuccess: () => {
+      onSuccess: (data) => {
+        const newToken = data?.data?.token;
+        if (newToken && user) {
+          login(user, newToken);
+        }
         toast.success(t('password.success'));
         setForm({ current_password: '', password: '', password_confirmation: '' });
       },

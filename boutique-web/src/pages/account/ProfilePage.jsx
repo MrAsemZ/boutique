@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../../stores/authStore';
@@ -53,29 +53,17 @@ function Field({ label, children, hint }) {
 
 export default function ProfilePage() {
   const { t, i18n } = useTranslation();
-  const { user } = useAuthStore();
+  const { user, setUser } = useAuthStore();
   const updateProfile = useUpdateProfile();
 
-  const [form, setForm] = useState({
-    name: '',
-    phone: '',
-    gender: 'prefer_not_to_say',
-    language: 'ar',
-    theme: 'default',
-  });
+  const [form, setForm] = useState(() => ({
+    name:             user?.name             || '',
+    phone:            user?.phone            || '',
+    gender:           user?.gender           || 'prefer_not_to_say',
+    preferred_locale: user?.preferred_locale || i18n.language || 'ar',
+    preferred_theme:  user?.preferred_theme  || 'default',
+  }));
   const [errors, setErrors] = useState({});
-
-  useEffect(() => {
-    if (user) {
-      setForm({
-        name: user.name ?? '',
-        phone: user.phone ?? '',
-        gender: user.gender ?? 'prefer_not_to_say',
-        language: user.language ?? i18n.language ?? 'ar',
-        theme: user.theme ?? 'default',
-      });
-    }
-  }, [user, i18n.language]);
 
   const set = (key) => (val) => setForm((f) => ({ ...f, [key]: val }));
   const setInput = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -87,17 +75,36 @@ export default function ProfilePage() {
     if (Object.keys(errs).length) { setErrors(errs); return; }
     setErrors({});
 
-    updateProfile.mutate(form, {
-      onSuccess: () => {
+    const { preferred_theme, ...profilePayload } = form;
+    profilePayload.name = profilePayload.name || '';
+    profilePayload.phone = profilePayload.phone || '';
+    updateProfile.mutate(profilePayload, {
+      onSuccess: (data) => {
+        const updatedUser = data?.data?.data || data?.data || data;
+        if (updatedUser?.id) {
+          setUser(updatedUser);
+          setForm((prev) => ({
+            ...prev,
+            name:             updatedUser.name             || prev.name,
+            phone:            updatedUser.phone            || prev.phone,
+            gender:           updatedUser.gender           || prev.gender,
+            preferred_locale: updatedUser.preferred_locale || prev.preferred_locale,
+          }));
+        }
         toast.success(t('profile.save_success'));
-        if (form.language !== i18n.language) {
-          i18n.changeLanguage(form.language);
+        if (updatedUser.preferred_locale && updatedUser.preferred_locale !== i18n.language) {
+          i18n.changeLanguage(updatedUser.preferred_locale);
+          localStorage.setItem('boutique_locale', updatedUser.preferred_locale);
         }
       },
       onError: (err) => {
         const data = err?.response?.data;
-        if (data?.errors) setErrors(data.errors);
-        else toast.error(t('common.error'));
+        if (data?.errors) {
+          const firstError = Object.values(data.errors)[0]?.[0];
+          toast.error(firstError || t('common.error'));
+        } else {
+          toast.error(data?.message || t('common.error'));
+        }
       },
     });
   };
@@ -173,13 +180,13 @@ export default function ProfilePage() {
         </Field>
 
         <Field label={t('profile.language')}>
-          <PillSelector options={LANGUAGES} value={form.language} onChange={set('language')} tPrefix="profile" />
+          <PillSelector options={LANGUAGES} value={form.preferred_locale} onChange={set('preferred_locale')} tPrefix="profile" />
         </Field>
 
         <Field label={t('profile.theme')}>
           <select
-            value={form.theme}
-            onChange={setInput('theme')}
+            value={form.preferred_theme}
+            onChange={setInput('preferred_theme')}
             style={{ ...inputStyle(false), appearance: 'none', cursor: 'pointer' }}
           >
             {THEMES.map((th) => (
