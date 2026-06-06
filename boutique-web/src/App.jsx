@@ -29,7 +29,10 @@ import SocialCallbackPage from './pages/auth/SocialCallbackPage'
 // App pages (stubs — will be replaced per step)
 import ProductListingPage from './pages/shop/ProductListingPage'
 import ProductDetailPage from './pages/shop/ProductDetailPage'
-import { CartPage, CheckoutPage, OrderSuccessPage, OrderCancelledPage } from './pages/checkoutPages'
+import CartPage from './pages/cart/CartPage'
+import CheckoutPage from './pages/checkout/CheckoutPage'
+import OrderSuccessPage from './pages/checkout/OrderSuccessPage'
+import { OrderCancelledPage } from './pages/checkoutPages'
 import { OrderHistoryPage, OrderDetailPage } from './pages/orderPages'
 import { ProfilePage, AddressPage, WishlistPage } from './pages/accountPages'
 import { VendorDashboardPage, AdminDashboardPage } from './pages/adminPages'
@@ -71,8 +74,8 @@ function AppInner() {
           <Route path="/shop/:categorySlug" element={<ProductListingPage />} />
           <Route path="/products/:slug" element={<ProductDetailPage />} />
 
-          {/* Auth required */}
-          <Route path="/cart" element={<AuthGuard><CartPage /></AuthGuard>} />
+          {/* Cart — guests can view; auth required only for checkout */}
+          <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<AuthGuard><CheckoutPage /></AuthGuard>} />
           <Route path="/checkout/success" element={<AuthGuard><OrderSuccessPage /></AuthGuard>} />
           <Route path="/checkout/cancelled" element={<AuthGuard><OrderCancelledPage /></AuthGuard>} />
