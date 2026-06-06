@@ -33,8 +33,6 @@ export default function LoginPage() {
   const isArabic = i18n.language === 'ar';
   const navigate = useNavigate();
   const location = useLocation();
-  const returnUrl = location.state?.from || '/';
-
   const [form, setForm] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
   const { mutate: login, isPending } = useLogin();
@@ -58,9 +56,19 @@ export default function LoginPage() {
     e.preventDefault();
     if (!validate()) return;
     login(form, {
-      onSuccess: () => {
+      onSuccess: (data) => {
         toast.success(isArabic ? 'مرحباً بعودتك!' : 'Welcome back!');
-        navigate(returnUrl, { replace: true });
+        const user = data?.data?.user ?? data?.data?.data?.user;
+        const from = location.state?.from;
+        if (from && from !== '/login') {
+          navigate(from, { replace: true });
+        } else if (user?.role === 'admin') {
+          navigate('/admin/dashboard', { replace: true });
+        } else if (user?.role === 'vendor') {
+          navigate('/vendor/dashboard', { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
       },
       onError: (err) => {
         const msg = err?.response?.data?.message;

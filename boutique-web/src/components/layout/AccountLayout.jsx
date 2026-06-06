@@ -197,6 +197,7 @@ export default function AccountLayout({ children }) {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const navigate = useNavigate();
+  const isCustomer = user?.role === 'customer';
   const logout = useLogout();
 
   const initials = (user?.name ?? '?')
@@ -243,6 +244,22 @@ export default function AccountLayout({ children }) {
               </NavLink>
             ))}
           </nav>
+
+          {isCustomer && (
+            <div style={{ padding: '0 8px', marginTop: '8px' }}>
+              <NavLink
+                to="/vendor/apply"
+                className={({ isActive }) => (isActive ? 'active' : '')}
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '10px', fontSize: '0.9rem', fontWeight: 500, color: 'var(--theme-accent)', textDecoration: 'none', border: '1px dashed var(--theme-accent)', transition: 'background 0.15s' }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                {t('vendor.become_vendor')}
+              </NavLink>
+            </div>
+          )}
 
           <div className="acct-logout-wrap">
             <nav className="acct-nav" style={{ margin: 0 }}>

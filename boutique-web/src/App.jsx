@@ -39,7 +39,11 @@ import ProfilePage from './pages/account/ProfilePage'
 import AddressPage from './pages/account/AddressPage'
 import WishlistPage from './pages/account/WishlistPage'
 import ChangePasswordPage from './pages/account/ChangePasswordPage'
-import { VendorDashboardPage, AdminDashboardPage } from './pages/adminPages'
+import VendorDashboardPage from './pages/vendor/VendorDashboardPage'
+import VendorOrdersPage from './pages/vendor/VendorOrdersPage'
+import VendorBalancePage from './pages/vendor/VendorBalancePage'
+import VendorApplyPage from './pages/vendor/VendorApplyPage'
+import { AdminDashboardPage } from './pages/adminPages'
 
 // Routes that render their own full-screen layout (no navbar/footer)
 const AUTH_PATHS = new Set(['/login', '/register', '/forgot-password', '/email-verified', '/auth/callback'])
@@ -90,9 +94,16 @@ function AppInner() {
           <Route path="/account/wishlist" element={<AuthGuard><WishlistPage /></AuthGuard>} />
           <Route path="/account/password" element={<AuthGuard><ChangePasswordPage /></AuthGuard>} />
 
-          {/* Role-gated */}
-          <Route path="/vendor/dashboard" element={<RoleGuard role="vendor"><VendorDashboardPage /></RoleGuard>} />
-          <Route path="/admin/dashboard" element={<RoleGuard role="admin"><AdminDashboardPage /></RoleGuard>} />
+          {/* Vendor apply — authenticated customers */}
+          <Route path="/vendor/apply" element={<AuthGuard><VendorApplyPage /></AuthGuard>} />
+
+          {/* Vendor dashboard — role:vendor */}
+          <Route path="/vendor/dashboard" element={<AuthGuard><RoleGuard role="vendor"><VendorDashboardPage /></RoleGuard></AuthGuard>} />
+          <Route path="/vendor/orders" element={<AuthGuard><RoleGuard role="vendor"><VendorOrdersPage /></RoleGuard></AuthGuard>} />
+          <Route path="/vendor/balance" element={<AuthGuard><RoleGuard role="vendor"><VendorBalancePage /></RoleGuard></AuthGuard>} />
+
+          {/* Admin */}
+          <Route path="/admin/dashboard" element={<AuthGuard><RoleGuard role="admin"><AdminDashboardPage /></RoleGuard></AuthGuard>} />
 
           {/* 404 */}
           <Route path="*" element={<NotFoundPage />} />

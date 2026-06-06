@@ -5,10 +5,6 @@ import { useCartStore } from '../../stores/cartStore';
 import { getGuestCart } from '../../utils/guestCart';
 
 function extractAuthData(data) {
-  // Handle all possible response shapes:
-  //   data.data.data  — if axios response object was passed un-unwrapped
-  //   data.data       — normal case: mutationFn does .then(r => r.data), data = Laravel envelope
-  //   data            — already fully unwrapped
   const payload = data?.data?.data ?? data?.data ?? data;
   return {
     token: payload?.token ?? null,
