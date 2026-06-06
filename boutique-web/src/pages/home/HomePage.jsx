@@ -89,16 +89,21 @@ function getTagline(slug = '', lang) {
 }
 
 const CATEGORY_IMAGES = {
-  women:       'https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?w=600&h=400&fit=crop',
   men:         'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=600&h=400&fit=crop',
-  kids:        'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=600&h=400&fit=crop',
+  women:       'https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?w=600&h=400&fit=crop',
+  kids:        'https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?w=600&h=400&fit=crop',
   accessories: 'https://images.unsplash.com/photo-1492707892479-7bc8d5a4ee93?w=600&h=400&fit=crop',
   default:     'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=600&h=400&fit=crop',
 };
 
 function getCategoryImage(slug = '') {
-  const key = Object.keys(CATEGORY_IMAGES).find((k) => k !== 'default' && slug.toLowerCase().includes(k));
-  return CATEGORY_IMAGES[key] ?? CATEGORY_IMAGES.default;
+  if (!slug) return CATEGORY_IMAGES.default;
+  const s = slug.toLowerCase();
+  if (s.includes('women'))       return CATEGORY_IMAGES.women;
+  if (s.includes('men'))         return CATEGORY_IMAGES.men;
+  if (s.includes('kids'))        return CATEGORY_IMAGES.kids;
+  if (s.includes('accessories')) return CATEGORY_IMAGES.accessories;
+  return CATEGORY_IMAGES.default;
 }
 
 // ── Sub-components ──────────────────────────────────────────────────────────
@@ -307,15 +312,15 @@ export default function HomePage() {
   const { mutate: addToWishlist } = useAddToWishlist();
   const { mutate: removeFromWishlist } = useRemoveFromWishlist();
 
-  const wishlistItems = Array.isArray(wishlistData) ? wishlistData : (wishlistData?.data ?? []);
-  const wishlistVariantIds = new Set(wishlistItems.map(i => i.variant_id).filter(Boolean));
+  const wishlistItems = wishlistData?.data?.items ?? wishlistData?.items ?? [];
+  const wishlistVariantIds = new Set(wishlistItems.map(i => i.variant?.id).filter(Boolean));
 
   const handleWishlistToggle = (product) => {
-    const variantId = product.variants?.[0]?.id;
+    const variantId = product.first_variant_id ?? product.variants?.[0]?.id;
     if (!variantId) return;
     const isIn = wishlistVariantIds.has(variantId);
     if (isIn) {
-      const wItem = wishlistItems.find(i => i.variant_id === variantId);
+      const wItem = wishlistItems.find(i => i.variant?.id === variantId);
       if (wItem) removeFromWishlist(wItem.id);
     } else {
       addToWishlist({ product_variant_id: variantId });
@@ -386,7 +391,7 @@ export default function HomePage() {
               <ProductCard
                 key={p.id}
                 product={p}
-                isInWishlist={wishlistVariantIds.has(p.variants?.[0]?.id)}
+                isInWishlist={wishlistVariantIds.has(p.first_variant_id ?? p.variants?.[0]?.id)}
                 onWishlistToggle={handleWishlistToggle}
               />
             ))}
@@ -414,7 +419,7 @@ export default function HomePage() {
               <ProductCard
                 key={p.id}
                 product={p}
-                isInWishlist={wishlistVariantIds.has(p.variants?.[0]?.id)}
+                isInWishlist={wishlistVariantIds.has(p.first_variant_id ?? p.variants?.[0]?.id)}
                 onWishlistToggle={handleWishlistToggle}
               />
             ))}

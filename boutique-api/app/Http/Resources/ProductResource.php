@@ -43,6 +43,10 @@ class ProductResource extends JsonResource
             'brand'                => $this->brand,
             'primary_image_url'    => $primaryImage?->url,
             'in_stock'             => $inStock,
+            'first_variant_id'     => $this->variants
+                ->where('is_active', true)
+                ->where('stock', '>', 0)
+                ->first()?->id,
             'category'             => $this->whenLoaded('category', fn() => [
                 'id'           => $this->category->id,
                 'name'         => $this->category->name,

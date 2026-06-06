@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
+import { useCartStore } from '../../stores/cartStore';
+import { getGuestCart } from '../../utils/guestCart';
 import api from '../../api/axios';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 
@@ -16,16 +18,23 @@ export default function SocialCallbackPage() {
       return;
     }
 
-    // Set token in localStorage so the axios header picks it up
     localStorage.setItem('auth_token', token);
 
     api.get('/auth/me')
-      .then((r) => {
-        login(r.data?.user ?? r.data, token);
+      .then(async (r) => {
+        // /me returns { success, message, data: user }
+        const user = r.data?.data ?? r.data?.user ?? r.data ?? null;
+        login(user, token);
+        try {
+          if (getGuestCart().items.length > 0) {
+            await useCartStore.getState().mergeGuestCartToServer();
+          }
+        } catch {
+          // merge failure must never block navigation
+        }
         navigate('/', { replace: true });
       })
       .catch(() => {
-        // Token might still be valid even if /me fails; store minimal auth state
         login(null, token);
         navigate('/', { replace: true });
       });

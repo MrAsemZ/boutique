@@ -10,6 +10,7 @@ import { useAddToCart } from '../../hooks/api/useCart';
 import { useIntersectionObserver } from '../../hooks/useIntersectionObserver';
 import { formatPrice } from '../../utils/formatPrice';
 
+
 const FASHION_PLACEHOLDERS = [
   'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&h=500&fit=crop',
   'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=500&fit=crop',
@@ -48,9 +49,10 @@ export default function ProductCard({ product, isInWishlist = false, onWishlistT
 
   const handleAddToCart = (e) => {
     e.stopPropagation();
-    if (!isAuthenticated) { navigate('/login'); return; }
+    const variant = product.variants?.[0];
+    if (!variant) return;
     addToCart(
-      { product_id: product.id, quantity: 1 },
+      { variant_id: variant.id, quantity: 1, product, variant },
       {
         onSuccess: () => toast.success(isArabic ? 'تمت الإضافة للسلة' : 'Added to cart'),
         onError: (err) =>

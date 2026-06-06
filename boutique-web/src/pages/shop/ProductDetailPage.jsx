@@ -351,23 +351,27 @@ export default function ProductDetailPage() {
     ? Math.round(((product.base_price - product.sale_price) / product.base_price) * 100)
     : 0;
 
-  const baseImages = [product?.primary_image_url, ...(product?.images ?? []), ...(product?.gallery_images ?? [])].filter(Boolean);
-  const images = [...new Set(baseImages)];
+  const images = [
+    product?.primary_image_url,
+    ...(product?.images ?? [])
+      .filter((img) => img.url && img.url !== product?.primary_image_url)
+      .map((img) => img.url),
+  ].filter(Boolean);
 
   const variantImageIdx = selectedVariant?.image_url ? images.indexOf(selectedVariant.image_url) : -1;
   const displayImageIdx = variantImageIdx !== -1 ? variantImageIdx : mainImageIdx;
 
-  const wishlistItems = Array.isArray(wishlistData) ? wishlistData : (wishlistData?.data ?? []);
-  const wishlistItem  = wishlistItems.find(w => w.variant_id === selectedVariant?.id || w.product_id === product?.id);
+  const wishlistItems = wishlistData?.data?.items ?? wishlistData?.items ?? [];
+  const wishlistItem  = wishlistItems.find(w => w.variant?.id === selectedVariant?.id || w.product?.id === product?.id);
   const isInWishlist  = !!wishlistItem;
 
-  const wishlistVariantIds = new Set(wishlistItems.map(i => i.variant_id).filter(Boolean));
+  const wishlistVariantIds = new Set(wishlistItems.map(i => i.variant?.id).filter(Boolean));
   const handleRelatedWishlistToggle = (relatedProduct) => {
     const variantId = relatedProduct.variants?.[0]?.id;
     if (!variantId) return;
     const isIn = wishlistVariantIds.has(variantId);
     if (isIn) {
-      const wItem = wishlistItems.find(i => i.variant_id === variantId);
+      const wItem = wishlistItems.find(i => i.variant?.id === variantId);
       if (wItem) removeFromWishlist(wItem.id);
     } else {
       addToWishlist({ product_variant_id: variantId });
@@ -398,14 +402,18 @@ export default function ProductDetailPage() {
   const handleColorChange = (color) => { setSelectedColor(color); setQuantity(1); };
 
   const handleAddToCart = () => {
-    if (!isAuthenticated) { navigate('/login'); return; }
-    const payload = selectedVariant
-      ? { variant_id: selectedVariant.id, quantity }
-      : { product_id: product.id, quantity };
-    addToCart(payload, {
-      onSuccess: () => toast.success(isArabic ? 'تمت الإضافة إلى السلة' : 'Added to cart'),
-      onError:  (err) => toast.error(err?.response?.data?.message || (isArabic ? 'حدث خطأ' : 'Failed to add')),
-    });
+    if (!selectedSize || !selectedColor) {
+      toast.error(isArabic ? 'الرجاء اختيار المقاس واللون' : 'Please select size and color');
+      return;
+    }
+    if (!selectedVariant) return;
+    addToCart(
+      { variant_id: selectedVariant.id, quantity, product, variant: selectedVariant },
+      {
+        onSuccess: () => toast.success(isArabic ? 'تمت الإضافة إلى السلة' : 'Added to cart'),
+        onError:  (err) => toast.error(err?.response?.data?.message || (isArabic ? 'حدث خطأ' : 'Failed to add')),
+      }
+    );
   };
 
   const handleWishlist = () => {

@@ -294,15 +294,15 @@ export default function ProductListingPage() {
   const { mutate: addToWishlist } = useAddToWishlist();
   const { mutate: removeFromWishlist } = useRemoveFromWishlist();
 
-  const wishlistItems = Array.isArray(wishlistData) ? wishlistData : (wishlistData?.data ?? []);
-  const wishlistVariantIds = new Set(wishlistItems.map(i => i.variant_id).filter(Boolean));
+  const wishlistItems = wishlistData?.data?.items ?? wishlistData?.items ?? [];
+  const wishlistVariantIds = new Set(wishlistItems.map(i => i.variant?.id).filter(Boolean));
 
   const handleWishlistToggle = (product) => {
-    const variantId = product.variants?.[0]?.id;
+    const variantId = product.first_variant_id ?? product.variants?.[0]?.id;
     if (!variantId) return;
     const isIn = wishlistVariantIds.has(variantId);
     if (isIn) {
-      const wItem = wishlistItems.find(i => i.variant_id === variantId);
+      const wItem = wishlistItems.find(i => i.variant?.id === variantId);
       if (wItem) removeFromWishlist(wItem.id);
     } else {
       addToWishlist({ product_variant_id: variantId });
@@ -442,7 +442,7 @@ export default function ProductListingPage() {
                   <ProductCard
                     key={p.id}
                     product={p}
-                    isInWishlist={wishlistVariantIds.has(p.variants?.[0]?.id)}
+                    isInWishlist={wishlistVariantIds.has(p.first_variant_id ?? p.variants?.[0]?.id)}
                     onWishlistToggle={handleWishlistToggle}
                   />
                 ))}
