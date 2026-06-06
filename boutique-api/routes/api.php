@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminPayoutController;
+use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\AdminVoucherController;
 use App\Http\Controllers\Admin\VendorManagementController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordController;
@@ -177,6 +179,16 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('admin.
     // Payouts
     Route::get('payouts', [AdminPayoutController::class, 'index'])->name('payouts.index');
     Route::put('payouts/{vendor_id}/mark-paid', [AdminPayoutController::class, 'markPaid'])->name('payouts.mark-paid');
+
+    // Users
+    Route::get('users', [AdminUserController::class, 'index'])->name('users.index');
+    Route::put('users/{id}/toggle-status', [AdminUserController::class, 'toggleStatus'])->name('users.toggle-status');
+
+    // Vouchers
+    Route::get('vouchers', [AdminVoucherController::class, 'index'])->name('vouchers.index');
+    Route::post('vouchers', [AdminVoucherController::class, 'store'])->name('vouchers.store');
+    Route::put('vouchers/{id}', [AdminVoucherController::class, 'update'])->name('vouchers.update');
+    Route::delete('vouchers/{id}', [AdminVoucherController::class, 'destroy'])->name('vouchers.destroy');
 });
 
 /*

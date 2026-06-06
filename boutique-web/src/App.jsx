@@ -43,7 +43,13 @@ import VendorDashboardPage from './pages/vendor/VendorDashboardPage'
 import VendorOrdersPage from './pages/vendor/VendorOrdersPage'
 import VendorBalancePage from './pages/vendor/VendorBalancePage'
 import VendorApplyPage from './pages/vendor/VendorApplyPage'
-import { AdminDashboardPage } from './pages/adminPages'
+import AdminDashboardPage from './pages/admin/AdminDashboardPage'
+import AdminOrdersPage from './pages/admin/AdminOrdersPage'
+import AdminVendorsPage from './pages/admin/AdminVendorsPage'
+import AdminPayoutsPage from './pages/admin/AdminPayoutsPage'
+import AdminUsersPage from './pages/admin/AdminUsersPage'
+import AdminVouchersPage from './pages/admin/AdminVouchersPage'
+import AdminProductsPage from './pages/admin/AdminProductsPage'
 
 // Routes that render their own full-screen layout (no navbar/footer)
 const AUTH_PATHS = new Set(['/login', '/register', '/forgot-password', '/email-verified', '/auth/callback'])
@@ -51,7 +57,7 @@ const AUTH_PATHS = new Set(['/login', '/register', '/forgot-password', '/email-v
 function AppInner() {
   const { dir } = useDirection()
   const location = useLocation()
-  const isAuthRoute = AUTH_PATHS.has(location.pathname)
+  const isAuthRoute = AUTH_PATHS.has(location.pathname) || location.pathname.startsWith('/admin')
 
   return (
     <div
@@ -104,6 +110,12 @@ function AppInner() {
 
           {/* Admin */}
           <Route path="/admin/dashboard" element={<AuthGuard><RoleGuard role="admin"><AdminDashboardPage /></RoleGuard></AuthGuard>} />
+          <Route path="/admin/orders"    element={<AuthGuard><RoleGuard role="admin"><AdminOrdersPage /></RoleGuard></AuthGuard>} />
+          <Route path="/admin/vendors"   element={<AuthGuard><RoleGuard role="admin"><AdminVendorsPage /></RoleGuard></AuthGuard>} />
+          <Route path="/admin/payouts"   element={<AuthGuard><RoleGuard role="admin"><AdminPayoutsPage /></RoleGuard></AuthGuard>} />
+          <Route path="/admin/users"     element={<AuthGuard><RoleGuard role="admin"><AdminUsersPage /></RoleGuard></AuthGuard>} />
+          <Route path="/admin/vouchers"  element={<AuthGuard><RoleGuard role="admin"><AdminVouchersPage /></RoleGuard></AuthGuard>} />
+          <Route path="/admin/products"  element={<AuthGuard><RoleGuard role="admin"><AdminProductsPage /></RoleGuard></AuthGuard>} />
 
           {/* 404 */}
           <Route path="*" element={<NotFoundPage />} />
