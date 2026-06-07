@@ -8,6 +8,7 @@ import FormInput from '../../components/auth/FormInput';
 import SocialLoginButtons from '../../components/auth/SocialLoginButtons';
 import { useLogin } from '../../hooks/api/useAuth';
 import { validateEmail, validatePassword } from '../../utils/validation';
+import api from '../../api/axios';
 
 function Divider({ label }) {
   return (
@@ -35,6 +36,8 @@ export default function LoginPage() {
   const location = useLocation();
   const [form, setForm] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
+  const [showResendVerification, setShowResendVerification] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
   const { mutate: login, isPending } = useLogin();
 
   const validate = () => {
@@ -71,10 +74,29 @@ export default function LoginPage() {
         }
       },
       onError: (err) => {
-        const msg = err?.response?.data?.message;
+        const msg = err?.response?.data?.message || '';
         toast.error(msg || (isArabic ? 'بيانات غير صحيحة' : 'Invalid credentials'));
+        const isVerifyError = msg.toLowerCase().includes('verify') || err?.response?.status === 403;
+        if (isVerifyError) {
+          setShowResendVerification(true);
+          setVerificationEmail(form.email);
+        }
       },
     });
+  };
+
+  const handleResendVerification = async () => {
+    try {
+      await api.post('/auth/resend-verification-email', { email: verificationEmail });
+      toast.success(
+        isArabic
+          ? 'تم إرسال رسالة التحقق، تحقق من بريدك'
+          : 'Verification email sent, check your inbox'
+      );
+      setShowResendVerification(false);
+    } catch {
+      toast.error(isArabic ? 'حدث خطأ' : 'An error occurred');
+    }
   };
 
   const btnStyle = {
@@ -157,6 +179,35 @@ export default function LoginPage() {
           {isPending ? <><Spinner />{isArabic ? 'جارٍ...' : 'Loading...'}</> : t('auth.login')}
         </button>
       </form>
+
+      {showResendVerification && (
+        <div style={{
+          marginTop: '12px',
+          padding: '12px',
+          background: 'var(--theme-surface)',
+          border: '1px solid var(--theme-border)',
+          borderRadius: '8px',
+          textAlign: 'center',
+        }}>
+          <p style={{ fontSize: '13px', color: 'var(--theme-text-secondary)', marginBottom: '8px' }}>
+            {isArabic ? 'لم تستلم رسالة التحقق؟' : "Didn't receive the verification email?"}
+          </p>
+          <button
+            type="button"
+            onClick={handleResendVerification}
+            style={{
+              fontSize: '13px',
+              color: 'var(--theme-accent)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+            }}
+          >
+            {isArabic ? 'إعادة إرسال رسالة التحقق' : 'Resend verification email'}
+          </button>
+        </div>
+      )}
 
       <Divider label={isArabic ? 'أو' : 'or'} />
 

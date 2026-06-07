@@ -70,4 +70,20 @@ class RegisterController extends Controller
 
         return $this->success(null, 'Verification email has been resent.');
     }
+
+    public function resendVerificationByEmail(Request $request): JsonResponse
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $user = User::where('email', $request->email)->first();
+
+        // Always return success to avoid user enumeration
+        if (!$user || $user->hasVerifiedEmail()) {
+            return $this->success(null, 'If that email exists and is unverified, a verification link has been sent.');
+        }
+
+        $user->sendEmailVerificationNotification();
+
+        return $this->success(null, 'If that email exists and is unverified, a verification link has been sent.');
+    }
 }

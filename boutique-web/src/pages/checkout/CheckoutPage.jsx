@@ -540,7 +540,17 @@ export default function CheckoutPage() {
         }
       },
       onError: (err) => {
-        toast.error(err?.response?.data?.message || t('common.error'));
+        if (err?.response?.status === 403) {
+          const isAr = i18n.language === 'ar';
+          toast.error(
+            isAr
+              ? 'يرجى التحقق من بريدك الإلكتروني لإتمام الطلب'
+              : 'Please verify your email address to place an order',
+            { duration: 5000 }
+          );
+        } else {
+          toast.error(err?.response?.data?.message || t('common.error'));
+        }
       },
     });
   };

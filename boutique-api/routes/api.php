@@ -42,6 +42,7 @@ Route::prefix('auth')->name('auth.')->group(function () {
 
     Route::post('forgot-password', [PasswordController::class, 'forgotPassword'])->name('forgot-password')->middleware('throttle:5,1');
     Route::post('reset-password', [PasswordController::class, 'resetPassword'])->name('reset-password')->middleware('throttle:5,1');
+    Route::post('resend-verification-email', [RegisterController::class, 'resendVerificationByEmail'])->name('resend-verification-email')->middleware('throttle:5,1');
 
     Route::prefix('social')->name('social.')->group(function () {
         Route::get('{provider}/redirect', [SocialAuthController::class, 'redirect'])->name('redirect');

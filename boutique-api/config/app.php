@@ -125,4 +125,6 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'require_email_verification' => env('MAIL_VERIFY_REQUIRED', true),
+
 ];
