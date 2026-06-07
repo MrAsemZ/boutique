@@ -269,7 +269,7 @@ export default function ProductListingPage() {
   const { i18n } = useTranslation();
   const isArabic = i18n.language === 'ar';
   const { categorySlug } = useParams();
-  const { setThemeForCategory } = useTheme();
+  const { setThemeForCategory, setTheme } = useTheme();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const gridTopRef = useRef(null);
 
@@ -318,8 +318,13 @@ export default function ProductListingPage() {
 
   // Sync route category slug → theme
   useEffect(() => {
-    if (categorySlug) setThemeForCategory(categorySlug);
-  }, [categorySlug, setThemeForCategory]);
+    if (categorySlug) {
+      setThemeForCategory(categorySlug);
+    } else {
+      setTheme('default');
+    }
+    return () => setTheme('default');
+  }, [categorySlug, setThemeForCategory, setTheme]);
 
   const handleCategorySelect = (slug) => {
     setThemeForCategory(slug);

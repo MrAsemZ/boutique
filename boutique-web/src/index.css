@@ -65,10 +65,10 @@ body {
 
 /* ── Luxury ───────────────────────────────────────────────────────────────── */
 [data-theme="luxury"] {
-  --theme-bg: #F5F2EE;
-  --theme-surface: #FDFCFA;
-  --theme-border: #DDD5C8;
-  --theme-border-strong: #C4B89A;
+  --theme-bg: #F0EBE3;
+  --theme-surface: #FAF6F1;
+  --theme-border: #C8B89A;
+  --theme-border-strong: #A89070;
   --theme-accent: #8B6914;
   --theme-accent-hover: #A07820;
   --theme-text-primary: #1C1812;
