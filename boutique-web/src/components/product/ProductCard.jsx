@@ -114,9 +114,14 @@ export default function ProductCard({ product, isInWishlist = false, onWishlistT
           {productName}
         </p>
 
-        {product.brand_name && (
-          <p style={{ fontSize: '0.75rem', color: 'var(--theme-text-secondary)', margin: '0 0 8px' }}>
-            {product.brand_name}
+        {product.brand && (
+          <p style={{
+            fontSize: '12px',
+            color: 'var(--theme-text-secondary)',
+            margin: '2px 0 4px',
+            fontStyle: 'italic',
+          }}>
+            {i18n.language === 'ar' ? (product.brand_ar || product.brand) : product.brand}
           </p>
         )}
 

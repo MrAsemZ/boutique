@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -90,8 +91,8 @@ function getTagline(slug = '', lang) {
 
 const CATEGORY_IMAGES = {
   men:         'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=600&h=400&fit=crop',
-  women:       'https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?w=600&h=400&fit=crop',
-  kids:        'https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?w=600&h=400&fit=crop',
+  women:       'https://images.unsplash.com/photo-1769063382670-823451e5a7ef?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  kids:        'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=600&h=400&fit=crop',
   accessories: 'https://images.unsplash.com/photo-1492707892479-7bc8d5a4ee93?w=600&h=400&fit=crop',
   default:     'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=600&h=400&fit=crop',
 };
@@ -111,21 +112,19 @@ function getCategoryImage(slug = '') {
 function HeroSection({ isArabic }) {
   return (
     <div style={{
-      position: 'relative', minHeight: '85vh',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      overflow: 'hidden',
-      background: 'linear-gradient(135deg, var(--theme-bg) 0%, var(--theme-surface) 100%)',
+      position: 'relative',
+      minHeight: '85vh',
+      backgroundImage: 'url(https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&h=900&fit=crop)',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
     }}>
-      {/* Decorative blobs */}
       <div style={{
-        position: 'absolute', width: '500px', height: '500px', borderRadius: '50%',
-        background: 'var(--theme-accent)', opacity: 0.08, filter: 'blur(100px)',
-        top: '-150px', insetInlineEnd: '-100px', pointerEvents: 'none',
-      }} />
-      <div style={{
-        position: 'absolute', width: '350px', height: '350px', borderRadius: '50%',
-        background: 'var(--theme-accent)', opacity: 0.06, filter: 'blur(80px)',
-        bottom: '-80px', insetInlineStart: '-60px', pointerEvents: 'none',
+        position: 'absolute',
+        inset: 0,
+        background: 'linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 100%)',
       }} />
 
       <div style={{
@@ -135,7 +134,7 @@ function HeroSection({ isArabic }) {
       }}>
         <h1 style={{
           fontSize: 'clamp(2.25rem, 6vw, 4rem)', fontWeight: 800,
-          color: 'var(--theme-text-primary)', margin: '0 0 16px',
+          color: '#FFFFFF', margin: '0 0 16px',
           lineHeight: 1.15,
           letterSpacing: isArabic ? 0 : '-0.02em',
         }}>
@@ -143,7 +142,7 @@ function HeroSection({ isArabic }) {
         </h1>
         <p style={{
           fontSize: 'clamp(1rem, 2.5vw, 1.25rem)',
-          color: 'var(--theme-text-secondary)', margin: '0 0 40px', lineHeight: 1.6,
+          color: 'rgba(255,255,255,0.85)', margin: '0 0 40px', lineHeight: 1.6,
         }}>
           {isArabic
             ? 'أحدث صيحات الموضة من أفضل البائعين'
@@ -154,7 +153,7 @@ function HeroSection({ isArabic }) {
             to="/shop"
             style={{
               padding: '14px 36px', borderRadius: '50px',
-              background: 'var(--theme-accent)', color: 'var(--theme-bg)',
+              background: '#FFFFFF', color: '#111827',
               fontWeight: 600, fontSize: '1rem', textDecoration: 'none',
               transition: 'opacity 0.2s, transform 0.15s',
             }}
@@ -167,7 +166,7 @@ function HeroSection({ isArabic }) {
             to="/shop"
             style={{
               padding: '14px 36px', borderRadius: '50px',
-              border: '2px solid var(--theme-accent)', color: 'var(--theme-accent)',
+              border: '2px solid #FFFFFF', color: '#FFFFFF',
               fontWeight: 600, fontSize: '1rem', textDecoration: 'none',
               transition: 'opacity 0.2s, transform 0.15s', background: 'transparent',
             }}
@@ -183,6 +182,7 @@ function HeroSection({ isArabic }) {
 }
 
 function CategoryCard({ category, isArabic, index, onHover, onLeave, onNavigate }) {
+  const [isHovered, setIsHovered] = useState(false);
   const name = isArabic
     ? (category.name_ar ?? category.display_name)
     : (category.name ?? category.display_name_en ?? category.display_name);
@@ -202,11 +202,13 @@ function CategoryCard({ category, isArabic, index, onHover, onLeave, onNavigate 
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'scale(1.03)';
         e.currentTarget.style.filter = 'brightness(1.12)';
+        setIsHovered(true);
         onHover(category.slug);
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = 'scale(1)';
         e.currentTarget.style.filter = 'brightness(1)';
+        setIsHovered(false);
         onLeave();
       }}
       onClick={() => onNavigate(category.slug)}
@@ -223,6 +225,22 @@ function CategoryCard({ category, isArabic, index, onHover, onLeave, onNavigate 
           {tagline}
         </p>
       </div>
+      {isHovered && (
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'rgba(0,0,0,0.4)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'all 0.3s ease',
+        }}>
+          <span style={{
+            color: 'white', border: '2px solid white',
+            padding: '10px 24px', borderRadius: '50px',
+            fontSize: '14px', fontWeight: '500',
+          }}>
+            {isArabic ? 'تسوق الآن' : 'Shop Now'}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -345,7 +363,7 @@ export default function HomePage() {
       <HeroSection isArabic={isArabic} />
 
       {/* ── Categories ── */}
-      <SectionWrapper title="تسوق حسب الفئة" titleEn="Shop by Category">
+      <SectionWrapper title="تسوق حسب الفئة" titleEn="Shop by Category" topPadding={40}>
         {catLoading ? (
           <div className="home-cat-grid">
             {Array.from({ length: 8 }).map((_, i) => (

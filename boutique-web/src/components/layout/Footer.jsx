@@ -1,8 +1,16 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
+const TRUST_BADGES = [
+  { ar: '🚚 توصيل سريع', en: '🚚 Fast Delivery' },
+  { ar: '🔒 دفع آمن', en: '🔒 Secure Payment' },
+  { ar: '↩️ إرجاع سهل', en: '↩️ Easy Returns' },
+  { ar: '💬 دعم 24/7', en: '💬 24/7 Support' },
+];
+
 export default function Footer() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isArabic = i18n.language === 'ar';
 
   return (
     <footer
@@ -14,6 +22,31 @@ export default function Footer() {
       }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        {/* Trust badges */}
+        <div style={{
+          display: 'flex',
+          gap: '24px',
+          justifyContent: 'center',
+          flexWrap: 'wrap',
+          padding: '16px 0',
+          borderTop: '1px solid var(--theme-border)',
+          borderBottom: '1px solid var(--theme-border)',
+          marginBottom: '24px',
+        }}>
+          {TRUST_BADGES.map((badge) => (
+            <span key={badge.en} style={{
+              fontSize: '13px',
+              color: 'var(--theme-text-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}>
+              {isArabic ? badge.ar : badge.en}
+            </span>
+          ))}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
           {/* Brand */}
@@ -58,6 +91,15 @@ export default function Footer() {
             textAlign: 'center',
           }}
         >
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: '12px' }}>
+            {['Instagram', 'Facebook', 'TikTok'].map((social) => (
+              <a key={social} href="#" style={{
+                fontSize: '13px',
+                color: 'var(--theme-text-secondary)',
+                textDecoration: 'none',
+              }}>{social}</a>
+            ))}
+          </div>
           <p style={{ color: 'var(--theme-text-hint)', fontSize: '0.75rem', margin: 0 }}>
             © {new Date().getFullYear()} Boutique · بوتيك. All rights reserved.
           </p>

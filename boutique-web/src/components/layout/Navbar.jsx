@@ -44,7 +44,7 @@ function CountBadge({ count }) {
 }
 
 export default function Navbar() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { isRTL } = useDirection();
   const { isAuthenticated, logout } = useAuthStore();
   const { itemCount: cartCount } = useCartStore();
@@ -62,6 +62,20 @@ export default function Navbar() {
   const iconStyle = { color: 'var(--theme-text-secondary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' };
 
   return (
+    <>
+    <div style={{
+      background: 'var(--theme-accent)',
+      color: 'var(--theme-surface)',
+      textAlign: 'center',
+      padding: '8px 16px',
+      fontSize: '13px',
+      fontWeight: '500',
+    }}>
+      {i18n.language === 'ar'
+        ? '🎉 شحن مجاني على الطلبات فوق 100 د.أ | استخدم كود WELCOME20 لخصم 20%'
+        : '🎉 Free shipping on orders over JOD 100 | Use code WELCOME20 for 20% off'
+      }
+    </div>
     <nav
       className="sticky top-0 z-50"
       style={{
@@ -250,5 +264,6 @@ export default function Navbar() {
         )}
       </div>
     </nav>
+    </>
   );
 }
