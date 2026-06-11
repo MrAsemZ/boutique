@@ -3,7 +3,8 @@ import i18n from '../i18n/index.js';
 import { useAuthStore } from '../stores/authStore';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api',
+  baseURL: import.meta.env.VITE_API_URL ||
+           'https://boutique-production-7262.up.railway.app/api',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
