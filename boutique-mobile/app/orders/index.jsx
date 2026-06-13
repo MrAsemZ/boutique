@@ -2,7 +2,7 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } fr
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useEffect } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { useOrders } from '../../src/hooks/api/useOrders';
 import useAuthStore from '../../src/stores/authStore';
 import StatusBadge from '../../src/components/StatusBadge';
@@ -18,16 +18,42 @@ export default function OrdersScreen() {
   const router = useRouter();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace('/auth/login');
-    }
-  }, [isAuthenticated]);
+  const isArabic = i18n.language === 'ar';
+
+  // ── Guest state — no redirect, show login prompt ──────────────────────────
+
+  if (!isAuthenticated) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={styles.backText}>{'< '}{t('common.back')}</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{t('order.history')}</Text>
+          <View style={{ width: 60 }} />
+        </View>
+        <View style={styles.guestContainer}>
+          <Ionicons name="bag-outline" size={64} color="#9CA3AF" />
+          <Text style={styles.guestTitle}>
+            {isArabic ? 'سجل دخولك لعرض طلباتك' : 'Sign in to view your orders'}
+          </Text>
+          <TouchableOpacity
+            style={styles.loginBtn}
+            onPress={() => router.push('/auth/login')}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.loginBtnText}>
+              {isArabic ? 'تسجيل الدخول' : 'Login'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const { data, isLoading, refetch, isRefetching } = useOrders();
   const orders = Array.isArray(data?.data) ? data.data : [];
 
-  if (!isAuthenticated) return null;
   if (isLoading) return <LoadingScreen />;
 
   const formatDate = (dateStr) => {
@@ -122,4 +148,29 @@ const styles = StyleSheet.create({
   orderFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   orderTotal: { fontSize: 16, fontWeight: '700', color: theme.accent },
   viewDetails: { fontSize: 13, color: theme.accent, fontWeight: '600' },
+
+  // Guest screen
+  guestContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    gap: 20,
+  },
+  guestTitle: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  loginBtn: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 100,
+    height: 50,
+    paddingHorizontal: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  loginBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
 });

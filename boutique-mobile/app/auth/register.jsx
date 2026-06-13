@@ -80,6 +80,10 @@ export default function RegisterScreen() {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.safe}>
+      {/* Decorative background blobs */}
+      <View style={styles.blobTop}    pointerEvents="none" />
+      <View style={styles.blobBottom} pointerEvents="none" />
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -91,15 +95,9 @@ export default function RegisterScreen() {
         >
           {/* ── Decorative brand header ── */}
           <View style={styles.brandPanel}>
-            <Text style={styles.brandTitle}>
-              {isArabic ? 'أناقتك تبدأ هنا' : 'Your elegance starts here'}
-            </Text>
+            <Text style={styles.brandTitle}>أناقتك تبدأ هنا</Text>
             <View style={styles.brandAccent} />
-            <Text style={styles.brandSubtitle}>
-              {isArabic
-                ? 'اكتشف أزياءً تعبّر عن أسلوبك'
-                : 'Discover fashion that speaks your style'}
-            </Text>
+            <Text style={styles.brandSubtitle}>Discover fashion that speaks your style</Text>
           </View>
 
           <View style={styles.card}>
@@ -247,6 +245,18 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   safe:      { flex: 1, backgroundColor: BG },
   container: { flexGrow: 1, justifyContent: 'center', padding: 20, paddingVertical: 36 },
+
+  // Background blobs
+  blobTop: {
+    position: 'absolute', top: -100, right: -80,
+    width: 280, height: 280, borderRadius: 140,
+    backgroundColor: 'rgba(139, 105, 20, 0.08)',
+  },
+  blobBottom: {
+    position: 'absolute', bottom: -60, left: -60,
+    width: 220, height: 220, borderRadius: 110,
+    backgroundColor: 'rgba(45, 45, 45, 0.05)',
+  },
 
   // Brand panel
   brandPanel: {

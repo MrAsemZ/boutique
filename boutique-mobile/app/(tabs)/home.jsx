@@ -200,14 +200,16 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* ── New Arrivals ── */}
+        {/* ── New Arrivals — subtle tinted block ── */}
         {newArrivals.length > 0 && (
-          <View style={[styles.section, { marginTop: SECTION_SPACING }]}>
-            <SectionHeader
-              title={isArabic ? 'وصل حديثاً' : 'New Arrivals'}
-              onSeeAll={() => router.push('/(tabs)/shop')}
-            />
-            <View>{renderGrid(newArrivals)}</View>
+          <View style={styles.newArrivalsBlock}>
+            <View style={styles.section}>
+              <SectionHeader
+                title={isArabic ? 'وصل حديثاً' : 'New Arrivals'}
+                onSeeAll={() => router.push('/(tabs)/shop')}
+              />
+              <View>{renderGrid(newArrivals)}</View>
+            </View>
           </View>
         )}
 
@@ -284,4 +286,12 @@ const styles = StyleSheet.create({
   catName:     { color: '#FFFFFF', fontWeight: '700', fontSize: 16 },
 
   gridRow: { flexDirection: 'row', gap: 12, marginBottom: 12 },
+
+  // New Arrivals subtle tinted background block
+  newArrivalsBlock: {
+    backgroundColor: '#FCFBF9',
+    marginTop: SECTION_SPACING,
+    paddingTop: 20,
+    paddingBottom: 8,
+  },
 });

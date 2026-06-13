@@ -5,18 +5,18 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import useAuthStore from '../../src/stores/authStore';
 import { themes } from '../../src/theme/colors';
-import { SCREEN_PADDING, BUTTON_HEIGHT } from '../../src/theme/styles';
+import { SCREEN_PADDING } from '../../src/theme/styles';
 
 const theme = themes.default;
 
 // ── Nav items matching web AccountLayout ─────────────────────────────────────
 
 const NAV_ITEMS = [
-  { key: 'orders',    icon: 'bag-outline',           path: '/orders'           },
-  { key: 'wishlist',  icon: 'heart-outline',         path: '/account/wishlist' },
-  { key: 'profile',   icon: 'person-outline',        path: '/account/profile'  },
-  { key: 'addresses', icon: 'location-outline',      path: '/account/addresses' },
-  { key: 'password',  icon: 'lock-closed-outline',   path: '/account/password' },
+  { key: 'orders',    icon: 'bag-outline',         path: '/orders'            },
+  { key: 'wishlist',  icon: 'heart-outline',       path: '/account/wishlist'  },
+  { key: 'profile',   icon: 'person-outline',      path: '/account/profile'   },
+  { key: 'addresses', icon: 'location-outline',    path: '/account/addresses' },
+  { key: 'password',  icon: 'lock-closed-outline', path: '/account/password'  },
 ];
 
 function MenuItem({ icon, label, onPress }) {
@@ -32,11 +32,12 @@ function MenuItem({ icon, label, onPress }) {
 }
 
 export default function AccountScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const user            = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const logout          = useAuthStore((s) => s.logout);
+  const isArabic        = i18n.language === 'ar';
 
   const initials = user?.name
     ? user.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
@@ -56,20 +57,38 @@ export default function AccountScreen() {
     ]);
   };
 
-  // ── Guest state ──────────────────────────────────────────────────────────
+  // ── Guest state — show login/register options, no redirect ────────────────
 
   if (!isAuthenticated) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.guestWrap}>
-          <Ionicons name="person-circle-outline" size={80} color={theme.accent} />
-          <Text style={styles.guestTitle}>مرحباً بك في بوتيك</Text>
-          <Text style={styles.guestSub}>سجّل دخولك للمتابعة</Text>
-          <TouchableOpacity style={styles.loginBtn} onPress={() => router.push('/auth/login')}>
-            <Text style={styles.loginBtnText}>{t('auth.login')}</Text>
+          <Text style={styles.guestLogo}>Boutique</Text>
+          <Text style={styles.guestTitle}>
+            {isArabic ? 'مرحباً بك في بوتيك' : 'Welcome to Boutique'}
+          </Text>
+          <Text style={styles.guestSub}>
+            {isArabic
+              ? 'سجل دخولك للوصول إلى حسابك وطلباتك'
+              : 'Sign in to access your account and orders'}
+          </Text>
+          <TouchableOpacity
+            style={styles.loginBtn}
+            onPress={() => router.push('/auth/login')}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.loginBtnText}>
+              {isArabic ? 'تسجيل الدخول' : 'Login'}
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.registerBtn} onPress={() => router.push('/auth/register')}>
-            <Text style={styles.registerBtnText}>{t('auth.register')}</Text>
+          <TouchableOpacity
+            style={styles.registerBtn}
+            onPress={() => router.push('/auth/register')}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.registerBtnText}>
+              {isArabic ? 'إنشاء حساب' : 'Create Account'}
+            </Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -122,36 +141,62 @@ export default function AccountScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: theme.bg },
-  scroll: { flexGrow: 1, paddingHorizontal: SCREEN_PADDING, paddingTop: 8 },
+  safe: { flex: 1, backgroundColor: theme.bg },
 
-  // Guest
+  // Guest screen
   guestWrap: {
-    flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32,
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    paddingBottom: 40,
+  },
+  guestLogo: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#1A1A1A',
+    marginBottom: 28,
+    letterSpacing: -0.5,
   },
   guestTitle: {
-    fontSize: 22, fontWeight: '700', color: theme.textPrimary,
-    marginTop: 16, marginBottom: 8, textAlign: 'center',
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    textAlign: 'center',
+    marginBottom: 10,
   },
-  guestSub: { fontSize: 14, color: theme.textSecondary, marginBottom: 36, textAlign: 'center' },
+  guestSub: {
+    fontSize: 14,
+    color: '#888888',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 36,
+  },
   loginBtn: {
-    backgroundColor: theme.accent, borderRadius: 50,
-    height: BUTTON_HEIGHT, width: '100%',
-    alignItems: 'center', justifyContent: 'center', marginBottom: 12,
+    backgroundColor: '#1A1A1A',
+    borderRadius: 100,
+    height: 52,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   loginBtnText:    { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   registerBtn: {
-    borderWidth: 1.5, borderColor: theme.accent, borderRadius: 50,
-    height: BUTTON_HEIGHT, width: '100%',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  registerBtnText: { color: theme.accent, fontSize: 16, fontWeight: '600' },
-
-  // User section — centered
-  userSection: {
+    borderWidth: 1.5,
+    borderColor: '#1A1A1A',
+    borderRadius: 100,
+    height: 52,
+    width: '100%',
     alignItems: 'center',
-    paddingVertical: 24,
+    justifyContent: 'center',
   },
+  registerBtnText: { color: '#1A1A1A', fontSize: 16, fontWeight: '600' },
+
+  // Authenticated screen
+  scroll: { flexGrow: 1, paddingHorizontal: SCREEN_PADDING, paddingTop: 8 },
+
+  userSection: { alignItems: 'center', paddingVertical: 24 },
   avatar: {
     width: 64, height: 64, borderRadius: 32,
     backgroundColor: theme.accent,
@@ -162,7 +207,6 @@ const styles = StyleSheet.create({
   userName:   { fontSize: 17, fontWeight: '700', color: theme.textPrimary, textAlign: 'center' },
   userEmail:  { fontSize: 13, color: theme.textSecondary, marginTop: 3, textAlign: 'center' },
 
-  // Menu card
   menuCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
