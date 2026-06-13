@@ -1,6 +1,6 @@
 import {
-  View, Text, ScrollView, Image, TouchableOpacity,
-  StyleSheet, Dimensions,
+  View, Text, ScrollView, Image, ImageBackground, TouchableOpacity,
+  StyleSheet, Dimensions, I18nManager,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -17,7 +17,6 @@ import { SCREEN_PADDING, SECTION_SPACING } from '../../src/theme/styles';
 const theme = themes.default;
 const { width: SW } = Dimensions.get('window');
 const CARD_W = (SW - SCREEN_PADDING * 2 - 12) / 2;
-const CAT_W  = (SW - SCREEN_PADDING * 2 - 12) / 2;
 
 const CATEGORIES = [
   { slug: 'men',         en: 'Men',         ar: 'رجال',        image: 'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=400&h=300&fit=crop' },
@@ -28,19 +27,16 @@ const CATEGORIES = [
 
 function CategoryCard({ cat, isArabic, onPress }) {
   return (
-    <TouchableOpacity style={[styles.catCard, { width: CAT_W }]} onPress={onPress} activeOpacity={0.85}>
-      <Image
+    <TouchableOpacity style={styles.categoryCard} onPress={onPress} activeOpacity={0.85}>
+      <ImageBackground
         source={{ uri: cat.image }}
-        style={StyleSheet.absoluteFillObject}
-        resizeMode="cover"
-      />
-      {/* light tint over whole card */}
-      <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.15)' }} />
-      {/* dark band at bottom simulating gradient */}
-      <View style={styles.catGradient} />
-      <View style={styles.catTextWrap}>
-        <Text style={styles.catName}>{isArabic ? cat.ar : cat.en}</Text>
-      </View>
+        style={styles.categoryImage}
+        imageStyle={{ borderRadius: 12 }}
+      >
+        <View style={styles.categoryOverlay}>
+          <Text style={styles.categoryName}>{isArabic ? cat.ar : cat.en}</Text>
+        </View>
+      </ImageBackground>
     </TouchableOpacity>
   );
 }
@@ -156,11 +152,11 @@ export default function HomeScreen() {
         </View>
 
         {/* ── Categories — 2×2 grid ── */}
-        <View style={[styles.section, { marginTop: SECTION_SPACING }]}>
-          <SectionHeader
-            title={isArabic ? 'تسوق حسب الفئة' : 'Shop by Category'}
-          />
-          <View style={styles.catGrid}>
+        <View style={{ marginTop: SECTION_SPACING }}>
+          <View style={styles.section}>
+            <SectionHeader title={isArabic ? 'تسوق حسب الفئة' : 'Shop by Category'} />
+          </View>
+          <View style={styles.categoriesGrid}>
             {CATEGORIES.map((cat) => (
               <CategoryCard
                 key={cat.slug}
@@ -275,15 +271,37 @@ const styles = StyleSheet.create({
   hRow:         { paddingRight: 4 },
 
   // Category 2×2 grid
-  catGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  catCard: { height: 160, borderRadius: 12, overflow: 'hidden' },
-  catGradient: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    height: 80,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+  categoriesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
   },
-  catTextWrap: { position: 'absolute', bottom: 14, left: 14, right: 14 },
-  catName:     { color: '#FFFFFF', fontWeight: '700', fontSize: 16 },
+  categoryCard: {
+    width: (SW - 32 - 12) / 2,
+    height: 150,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  categoryImage: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'flex-end',
+  },
+  categoryOverlay: {
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+  },
+  categoryName: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: I18nManager.isRTL ? 'right' : 'left',
+  },
 
   gridRow: { flexDirection: 'row', gap: 12, marginBottom: 12 },
 
