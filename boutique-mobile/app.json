@@ -1,21 +1,23 @@
 {
   "expo": {
-    "name": "boutique-mobile",
-    "slug": "boutique-mobile",
+    "name": "Boutique",
+    "slug": "boutique",
+    "scheme": "boutique",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
+    "platforms": ["ios", "android"],
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.boutique.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
