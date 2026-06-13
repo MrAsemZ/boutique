@@ -1,7 +1,6 @@
 import {
   View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet,
-  Dimensions, ActivityIndicator, RefreshControl, ScrollView,
-  Modal,
+  Dimensions, ActivityIndicator, RefreshControl, ScrollView, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -9,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useProducts } from '../../src/hooks/api/useProducts';
+import { useCategories } from '../../src/hooks/api/useCategories';
 import { useWishlist, useToggleWishlist } from '../../src/hooks/api/useWishlist';
 import ProductCard from '../../src/components/ProductCard';
 import EmptyState from '../../src/components/EmptyState';
@@ -18,7 +18,7 @@ const theme = themes.default;
 const { width: SW } = Dimensions.get('window');
 const ITEM_W = (SW - 16 * 2 - 12) / 2;
 
-// ── Filter constants ────────────────────────────────────────────────────────
+// ── Static filter data ────────────────────────────────────────────────────────
 
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
@@ -43,27 +43,18 @@ const MATERIALS = [
   { value: 'leather',   ar: 'جلد',     en: 'Leather'   },
 ];
 
-const FILTER_CATS = [
-  { key: '',            ar: 'الكل',        en: 'All'         },
-  { key: 'men',         ar: 'رجال',        en: 'Men'         },
-  { key: 'women',       ar: 'نساء',        en: 'Women'       },
-  { key: 'kids',        ar: 'أطفال',       en: 'Kids'        },
-  { key: 'accessories', ar: 'إكسسوارات',  en: 'Accessories' },
-];
-
 const SORT_OPTIONS = [
-  { key: 'newest',     ar: 'الأحدث',       en: 'Newest'       },
-  { key: 'price_asc',  ar: 'السعر: الأقل', en: 'Price: Low'  },
-  { key: 'price_desc', ar: 'السعر: الأعلى', en: 'Price: High' },
+  { key: 'newest',     ar: 'الأحدث',          en: 'Newest'             },
+  { key: 'price_asc',  ar: 'السعر: الأقل',     en: 'Price: Low to High' },
+  { key: 'price_desc', ar: 'السعر: الأعلى',    en: 'Price: High to Low' },
+  { key: 'popularity', ar: 'الأكثر مبيعاً',    en: 'Most Popular'       },
 ];
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function toggle(arr, val) {
   return arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val];
 }
-
-// ── Filter section wrapper ───────────────────────────────────────────────────
 
 function FilterSection({ title, children }) {
   return (
@@ -74,107 +65,121 @@ function FilterSection({ title, children }) {
   );
 }
 
-// ── Main screen ──────────────────────────────────────────────────────────────
+// ── Main screen ───────────────────────────────────────────────────────────────
 
 export default function ShopScreen() {
   const { t, i18n } = useTranslation();
-  const router = useRouter();
-  const params = useLocalSearchParams();
-  const isArabic = i18n.language === 'ar';
+  const router      = useRouter();
+  const params      = useLocalSearchParams();
+  const isArabic    = i18n.language === 'ar';
 
-  // Search + sort
-  const [search, setSearch]               = useState('');
+  // ── Single filter state — every change fires immediately ─────────────────
+  const [search,          setSearch]          = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [sort, setSort]                   = useState('newest');
-  const [showSort, setShowSort]           = useState(false);
+  const [category,        setCategory]        = useState(params.category || '');
+  const [sizes,           setSizes]           = useState([]);
+  const [colors,          setColors]          = useState([]);
+  const [materials,       setMaterials]       = useState([]);
+  const [priceMin,        setPriceMin]        = useState('');
+  const [priceMax,        setPriceMax]        = useState('');
+  const [sort,            setSort]            = useState('newest');
+
+  // Local price input values — commit to main state on blur
+  const [inputPriceMin, setInputPriceMin] = useState('');
+  const [inputPriceMax, setInputPriceMax] = useState('');
+  // Sync local price inputs when main state changes (e.g. after clearFilters)
+  useEffect(() => { setInputPriceMin(priceMin); }, [priceMin]);
+  useEffect(() => { setInputPriceMax(priceMax); }, [priceMax]);
+
+  const commitPrice = () => {
+    setPriceMin(inputPriceMin);
+    setPriceMax(inputPriceMax);
+  };
+
+  // Sync category from route params
+  useEffect(() => {
+    if (params.category) setCategory(params.category);
+  }, [params.category]);
+
+  const [showFilter, setShowFilter] = useState(false);
   const debounceRef = useRef(null);
 
-  // Category quick-chips
-  const [category, setCategory] = useState(params.category || '');
-  useEffect(() => { if (params.category) setCategory(params.category); }, [params.category]);
+  // ── Derived state ─────────────────────────────────────────────────────────
+  const activeCount = [
+    search,
+    priceMin || priceMax,
+    ...sizes,
+    ...colors,
+    ...materials,
+    category,
+  ].filter(Boolean).length;
 
-  // Applied advanced filters
-  const [filterSizes,     setFilterSizes]     = useState([]);
-  const [filterColors,    setFilterColors]    = useState([]);
-  const [filterMaterials, setFilterMaterials] = useState([]);
-  const [filterPriceMin,  setFilterPriceMin]  = useState('');
-  const [filterPriceMax,  setFilterPriceMax]  = useState('');
-
-  // Filter modal
-  const [showFilter, setShowFilter] = useState(false);
-
-  // Draft state (lives inside modal)
-  const [draftCategory,  setDraftCategory]  = useState('');
-  const [draftSizes,     setDraftSizes]     = useState([]);
-  const [draftColors,    setDraftColors]    = useState([]);
-  const [draftMaterials, setDraftMaterials] = useState([]);
-  const [draftPriceMin,  setDraftPriceMin]  = useState('');
-  const [draftPriceMax,  setDraftPriceMax]  = useState('');
-
-  const openFilter = () => {
-    setDraftCategory(category);
-    setDraftSizes([...filterSizes]);
-    setDraftColors([...filterColors]);
-    setDraftMaterials([...filterMaterials]);
-    setDraftPriceMin(filterPriceMin);
-    setDraftPriceMax(filterPriceMax);
-    setShowFilter(true);
+  const clearFilters = () => {
+    setSearch('');
+    setDebouncedSearch('');
+    setCategory('');
+    setSizes([]);
+    setColors([]);
+    setMaterials([]);
+    setPriceMin('');
+    setPriceMax('');
+    setSort('newest');
   };
 
-  const applyFilters = () => {
-    setCategory(draftCategory);
-    setFilterSizes([...draftSizes]);
-    setFilterColors([...draftColors]);
-    setFilterMaterials([...draftMaterials]);
-    setFilterPriceMin(draftPriceMin);
-    setFilterPriceMax(draftPriceMax);
-    setShowFilter(false);
-  };
-
-  const clearDraft = () => {
-    setDraftCategory('');
-    setDraftSizes([]);
-    setDraftColors([]);
-    setDraftMaterials([]);
-    setDraftPriceMin('');
-    setDraftPriceMax('');
-  };
-
-  const activeFilterCount =
-    filterSizes.length + filterColors.length + filterMaterials.length +
-    (filterPriceMin ? 1 : 0) + (filterPriceMax ? 1 : 0) + (category ? 1 : 0);
-
-  // Search debounce
+  // ── Search (debounced 500ms, fires immediately) ───────────────────────────
   const handleSearchChange = (text) => {
     setSearch(text);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => setDebouncedSearch(text), 500);
   };
 
-  // API query
-  const filters = {
-    ...(debouncedSearch         && { search:    debouncedSearch }),
-    ...(category                && { category }),
-    ...(filterSizes.length      && { sizes:     filterSizes.join(',') }),
-    ...(filterColors.length     && { colors:    filterColors.join(',') }),
-    ...(filterMaterials.length  && { materials: filterMaterials.join(',') }),
-    ...(filterPriceMin          && { price_min: filterPriceMin }),
-    ...(filterPriceMax          && { price_max: filterPriceMax }),
+  // ── API ───────────────────────────────────────────────────────────────────
+  const apiParams = {
+    ...(debouncedSearch  && { search:    debouncedSearch }),
+    ...(category         && { category }),
+    ...(sizes.length     && { size:      sizes[0] }),
+    ...(colors.length    && { color:     colors[0] }),
+    ...(materials.length && { material:  materials[0] }),
+    ...(priceMin         && { price_min: priceMin }),
+    ...(priceMax         && { price_max: priceMax }),
     sort,
-    per_page: 20,
+    per_page: 12,
   };
 
-  const { data, isLoading, refetch, isRefetching } = useProducts(filters);
+  const { data, isLoading, refetch, isRefetching } = useProducts(apiParams);
+  const { data: categoriesData }                   = useCategories();
   const { data: wishlistItems = [] }               = useWishlist();
   const toggleWishlist                             = useToggleWishlist();
 
   const products    = Array.isArray(data?.data) ? data.data : [];
-  const wishlistIds = new Set(wishlistItems.map((w) => w.product_id ?? w.id));
+
+  // Build category tree from API (2 levels, matching web)
+  const categories  = Array.isArray(categoriesData) ? categoriesData : [];
+  const catById     = {};
+  categories.forEach((c) => { catById[c.id] = { ...c, children: [] }; });
+  const catRoots = [];
+  categories.forEach((c) => {
+    if (c.parent_id && catById[c.parent_id]) {
+      catById[c.parent_id].children.push(catById[c.id]);
+    } else if (catById[c.id]) {
+      catRoots.push(catById[c.id]);
+    }
+  });
+
+  // ── Wishlist ──────────────────────────────────────────────────────────────
+  const wishlistIds = new Set(wishlistItems.map((w) => w.product?.id));
 
   const handleWishlist = useCallback(
-    (product) =>
-      toggleWishlist.mutate({ productId: product.id, isInWishlist: wishlistIds.has(product.id) }),
-    [wishlistIds]
+    (product) => {
+      const wishlistItem      = wishlistItems.find((w) => w.product?.id === product.id);
+      const isCurrentlyWished = !!wishlistItem;
+      toggleWishlist.mutate({
+        variantId:      product.first_variant_id,
+        wishlistItemId: wishlistItem?.id,
+        isInWishlist:   isCurrentlyWished,
+      });
+    },
+    [wishlistItems]
   );
 
   const renderItem = useCallback(
@@ -191,9 +196,28 @@ export default function ShopScreen() {
     [wishlistIds, handleWishlist]
   );
 
-  // ── Filter modal ───────────────────────────────────────────────────────────
+  // ── Category item (used in drawer) ────────────────────────────────────────
+  function CatItem({ cat, depth = 0 }) {
+    const name    = cat.display_name || (isArabic ? cat.name_ar : cat.name) || cat.name;
+    const isActive = category === cat.slug;
+    return (
+      <TouchableOpacity
+        style={[
+          fs.catRow,
+          { paddingLeft: depth * 16 + 12 },
+          isActive && fs.catRowActive,
+        ]}
+        onPress={() => setCategory(isActive ? '' : cat.slug)}
+        activeOpacity={0.7}
+      >
+        <Text style={[fs.catLabel, isActive && fs.catLabelActive]}>{name}</Text>
+        {isActive && <Ionicons name="checkmark" size={15} color={theme.accent} />}
+      </TouchableOpacity>
+    );
+  }
 
-  const FilterModal = (
+  // ── Filter drawer ─────────────────────────────────────────────────────────
+  const FilterDrawer = (
     <Modal
       visible={showFilter}
       animationType="slide"
@@ -201,44 +225,101 @@ export default function ShopScreen() {
       onRequestClose={() => setShowFilter(false)}
     >
       <View style={fs.overlay}>
-        {/* tap backdrop to close */}
-        <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setShowFilter(false)} />
-
+        <TouchableOpacity
+          style={{ flex: 1 }}
+          activeOpacity={1}
+          onPress={() => setShowFilter(false)}
+        />
         <View style={fs.sheet}>
-          {/* drag handle */}
+          {/* Drag handle */}
           <View style={fs.handle} />
 
-          {/* header */}
+          {/* Header */}
           <View style={fs.sheetHeader}>
-            <Text style={fs.sheetTitle}>{isArabic ? 'تصفية النتائج' : 'Filter Results'}</Text>
-            <TouchableOpacity onPress={() => setShowFilter(false)}>
+            <Text style={fs.sheetTitle}>
+              {isArabic
+                ? (activeCount > 0 ? `التصفية (${activeCount})` : 'التصفية')
+                : (activeCount > 0 ? `Filters (${activeCount})` : 'Filters')}
+            </Text>
+            <TouchableOpacity
+              onPress={() => setShowFilter(false)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
               <Ionicons name="close" size={22} color={theme.textPrimary} />
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            style={{ flex: 1 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Clear All — only when filters active, fires immediately */}
+            {activeCount > 0 && (
+              <View style={{ paddingHorizontal: 20, paddingTop: 14 }}>
+                <TouchableOpacity style={fs.clearAllBtn} onPress={clearFilters}>
+                  <Ionicons name="close-circle-outline" size={15} color={theme.accent} />
+                  <Text style={fs.clearAllText}>
+                    {isArabic
+                      ? `مسح الكل (${activeCount})`
+                      : `Clear All (${activeCount})`}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
 
-            {/* 1 — Categories */}
-            <FilterSection title={isArabic ? 'الفئة' : 'Category'}>
-              <View style={fs.pillRow}>
-                {FILTER_CATS.map((cat) => {
-                  const active = draftCategory === cat.key;
-                  return (
-                    <TouchableOpacity
-                      key={cat.key}
-                      onPress={() => setDraftCategory(cat.key)}
-                      style={[fs.pill, active && fs.pillActive]}
-                    >
-                      <Text style={[fs.pillText, active && fs.pillTextActive]}>
-                        {isArabic ? cat.ar : cat.en}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
+            {/* 1 — Search (fires immediately, debounced) */}
+            <FilterSection title={isArabic ? 'البحث' : 'Search'}>
+              <View style={fs.searchWrap}>
+                <Ionicons name="search-outline" size={17} color="#9CA3AF" style={{ marginRight: 8 }} />
+                <TextInput
+                  style={fs.searchInput}
+                  placeholder={isArabic ? 'ابحث عن منتج...' : 'Search products...'}
+                  placeholderTextColor="#9CA3AF"
+                  value={search}
+                  onChangeText={handleSearchChange}
+                />
+                {search.length > 0 && (
+                  <TouchableOpacity onPress={() => handleSearchChange('')}>
+                    <Ionicons name="close-circle" size={16} color="#9CA3AF" />
+                  </TouchableOpacity>
+                )}
               </View>
             </FilterSection>
 
-            {/* 2 — Price */}
+            {/* 2 — Sort (fires immediately) */}
+            <FilterSection title={isArabic ? 'الترتيب' : 'Sort By'}>
+              {SORT_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt.key}
+                  style={fs.sortOptRow}
+                  onPress={() => setSort(opt.key)}
+                >
+                  <View style={[fs.radio, sort === opt.key && fs.radioActive]}>
+                    {sort === opt.key && <View style={fs.radioDot} />}
+                  </View>
+                  <Text style={[fs.sortOptLabel, sort === opt.key && { color: theme.accent, fontWeight: '600' }]}>
+                    {isArabic ? opt.ar : opt.en}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </FilterSection>
+
+            {/* 3 — Categories from API (fires immediately) */}
+            {catRoots.length > 0 && (
+              <FilterSection title={isArabic ? 'الفئات' : 'Categories'}>
+                {catRoots.map((cat) => (
+                  <View key={cat.id}>
+                    <CatItem cat={cat} depth={0} />
+                    {cat.children?.map((child) => (
+                      <CatItem key={child.id} cat={child} depth={1} />
+                    ))}
+                  </View>
+                ))}
+              </FilterSection>
+            )}
+
+            {/* 3 — Price (commits on blur) */}
             <FilterSection title={isArabic ? 'السعر (د.أ)' : 'Price (JOD)'}>
               <View style={fs.priceRow}>
                 <TextInput
@@ -246,8 +327,9 @@ export default function ShopScreen() {
                   placeholder={isArabic ? 'الأدنى' : 'Min'}
                   placeholderTextColor={theme.textSecondary}
                   keyboardType="numeric"
-                  value={draftPriceMin}
-                  onChangeText={setDraftPriceMin}
+                  value={inputPriceMin}
+                  onChangeText={setInputPriceMin}
+                  onEndEditing={commitPrice}
                 />
                 <Text style={fs.priceSep}>—</Text>
                 <TextInput
@@ -255,21 +337,27 @@ export default function ShopScreen() {
                   placeholder={isArabic ? 'الأعلى' : 'Max'}
                   placeholderTextColor={theme.textSecondary}
                   keyboardType="numeric"
-                  value={draftPriceMax}
-                  onChangeText={setDraftPriceMax}
+                  value={inputPriceMax}
+                  onChangeText={setInputPriceMax}
+                  onEndEditing={commitPrice}
                 />
               </View>
+              {(priceMin || priceMax) && (
+                <Text style={fs.priceHint}>
+                  {priceMin || '0'} {isArabic ? 'د.أ' : 'JOD'} — {priceMax || '∞'} {isArabic ? 'د.أ' : 'JOD'}
+                </Text>
+              )}
             </FilterSection>
 
-            {/* 3 — Size */}
+            {/* 4 — Size pills (fire immediately) */}
             <FilterSection title={isArabic ? 'المقاس' : 'Size'}>
               <View style={fs.pillRow}>
                 {SIZES.map((size) => {
-                  const active = draftSizes.includes(size);
+                  const active = sizes.includes(size);
                   return (
                     <TouchableOpacity
                       key={size}
-                      onPress={() => setDraftSizes(toggle(draftSizes, size))}
+                      onPress={() => setSizes(toggle(sizes, size))}
                       style={[fs.pill, active && fs.pillActive]}
                     >
                       <Text style={[fs.pillText, active && fs.pillTextActive]}>{size}</Text>
@@ -279,36 +367,40 @@ export default function ShopScreen() {
               </View>
             </FilterSection>
 
-            {/* 4 — Color */}
+            {/* 5 — Color circles with ring effect (fire immediately) */}
             <FilterSection title={isArabic ? 'اللون' : 'Color'}>
               <View style={fs.colorRow}>
                 {COLORS.map((color) => {
-                  const active = draftColors.includes(color.value);
+                  const active = colors.includes(color.value);
                   return (
                     <TouchableOpacity
                       key={color.value}
-                      onPress={() => setDraftColors(toggle(draftColors, color.value))}
-                      title={isArabic ? color.ar : color.en}
-                      style={[
-                        fs.colorCircle,
-                        { backgroundColor: color.hex },
-                        color.border && { borderColor: theme.border },
-                        active && { borderWidth: 3, borderColor: theme.accent },
-                      ]}
-                    />
+                      onPress={() => setColors(toggle(colors, color.value))}
+                      activeOpacity={0.8}
+                    >
+                      <View style={[fs.colorWrap, active && fs.colorWrapActive]}>
+                        <View
+                          style={[
+                            fs.colorInner,
+                            { backgroundColor: color.hex },
+                            color.border && fs.colorInnerBorder,
+                          ]}
+                        />
+                      </View>
+                    </TouchableOpacity>
                   );
                 })}
               </View>
             </FilterSection>
 
-            {/* 5 — Material */}
+            {/* 6 — Material checkboxes (fire immediately) */}
             <FilterSection title={isArabic ? 'المادة' : 'Material'}>
               {MATERIALS.map((mat) => {
-                const active = draftMaterials.includes(mat.value);
+                const active = materials.includes(mat.value);
                 return (
                   <TouchableOpacity
                     key={mat.value}
-                    onPress={() => setDraftMaterials(toggle(draftMaterials, mat.value))}
+                    onPress={() => setMaterials(toggle(materials, mat.value))}
                     style={fs.checkRow}
                   >
                     <View style={[fs.checkbox, active && fs.checkboxActive]}>
@@ -325,13 +417,15 @@ export default function ShopScreen() {
             <View style={{ height: 8 }} />
           </ScrollView>
 
-          {/* footer */}
+          {/* Footer — closes drawer only, filters already live */}
           <View style={fs.footer}>
-            <TouchableOpacity style={fs.clearBtn} onPress={clearDraft}>
-              <Text style={fs.clearBtnText}>{isArabic ? 'مسح الكل' : 'Clear All'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={fs.applyBtn} onPress={applyFilters}>
-              <Text style={fs.applyBtnText}>{isArabic ? 'تطبيق' : 'Apply'}</Text>
+            <TouchableOpacity
+              style={fs.applyBtn}
+              onPress={() => setShowFilter(false)}
+            >
+              <Text style={fs.applyBtnText}>
+                {isArabic ? 'تطبيق الفلاتر' : 'Apply Filters'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -339,91 +433,57 @@ export default function ShopScreen() {
     </Modal>
   );
 
-  // ── List header ────────────────────────────────────────────────────────────
+  // ── List header ───────────────────────────────────────────────────────────
 
   const ListHeader = (
     <View>
-      {/* Search + Filter + Sort row */}
-      <View style={styles.searchRow}>
-        <View style={styles.searchBar}>
-          <Ionicons name="search-outline" size={18} color="#9CA3AF" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder={t('common.search')}
-            placeholderTextColor="#9CA3AF"
-            value={search}
-            onChangeText={handleSearchChange}
-          />
-          {search.length > 0 && (
-            <TouchableOpacity onPress={() => { setSearch(''); setDebouncedSearch(''); }}>
-              <Ionicons name="close-circle" size={16} color="#9CA3AF" />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Filter button */}
-        <TouchableOpacity style={styles.filterBtn} onPress={openFilter}>
-          <Ionicons name="options-outline" size={15} color={theme.textPrimary} />
-          <Text style={styles.filterBtnText}>{isArabic ? 'تصفية' : 'Filter'}</Text>
-          {activeFilterCount > 0 && (
-            <View style={styles.filterBadge}>
-              <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-
-        {/* Sort button */}
-        <TouchableOpacity style={styles.sortBtn} onPress={() => setShowSort((v) => !v)}>
-          <Text style={styles.sortBtnText}>{isArabic ? 'ترتيب ▾' : 'Sort ▾'}</Text>
-        </TouchableOpacity>
+      {/* Boutique logo — centered, matches home screen style */}
+      <View style={styles.shopHeader}>
+        <Text style={styles.shopLogo}>Boutique</Text>
       </View>
 
-      {/* Sort dropdown */}
-      {showSort && (
-        <View style={styles.sortMenu}>
-          {SORT_OPTIONS.map((opt) => (
-            <TouchableOpacity
-              key={opt.key}
-              style={[styles.sortOpt, sort === opt.key && styles.sortOptActive]}
-              onPress={() => { setSort(opt.key); setShowSort(false); }}
-            >
-              <Text style={[styles.sortOptText, sort === opt.key && styles.sortOptTextActive]}>
-                {isArabic ? opt.ar : opt.en}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-
-      {/* Category quick-chips */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chipsRow}
-      >
-        {FILTER_CATS.map((chip) => (
+      {/* Category quick-chips from API */}
+      {catRoots.length > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipsRow}
+        >
           <TouchableOpacity
-            key={chip.key}
-            style={[styles.chip, category === chip.key && styles.chipActive]}
-            onPress={() => setCategory(chip.key)}
+            style={[styles.chip, !category && styles.chipActive]}
+            onPress={() => setCategory('')}
           >
-            <Text style={[styles.chipText, category === chip.key && styles.chipTextActive]}>
-              {isArabic ? chip.ar : chip.en}
+            <Text style={[styles.chipText, !category && styles.chipTextActive]}>
+              {isArabic ? 'الكل' : 'All'}
             </Text>
           </TouchableOpacity>
-        ))}
-      </ScrollView>
+          {catRoots.map((cat) => {
+            const name = cat.display_name || (isArabic ? cat.name_ar : cat.name) || cat.name;
+            return (
+              <TouchableOpacity
+                key={cat.id}
+                style={[styles.chip, category === cat.slug && styles.chipActive]}
+                onPress={() => setCategory(category === cat.slug ? '' : cat.slug)}
+              >
+                <Text style={[styles.chipText, category === cat.slug && styles.chipTextActive]}>
+                  {name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
     </View>
   );
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <SafeAreaView style={styles.safe}>
-      {FilterModal}
+      {FilterDrawer}
 
       {isLoading && !products.length ? (
-        <View>
+        <View style={{ flex: 1 }}>
           {ListHeader}
           <View style={styles.loadingWrap}>
             <ActivityIndicator size="large" color={theme.accent} />
@@ -444,197 +504,211 @@ export default function ShopScreen() {
           ListEmptyComponent={!isLoading ? <EmptyState icon="👗" title={t('common.no_results')} /> : null}
         />
       )}
+
+      {/* Floating filter button — fixed at bottom center, like web mobile */}
+      <View pointerEvents="box-none" style={styles.floatingWrap}>
+        <TouchableOpacity
+          style={styles.floatingBtn}
+          onPress={() => setShowFilter(true)}
+          activeOpacity={0.88}
+        >
+          <Ionicons name="options-outline" size={18} color="#FFFFFF" />
+          <Text style={styles.floatingBtnText}>
+            {isArabic
+              ? (activeCount > 0 ? `الفلاتر (${activeCount})` : 'الفلاتر')
+              : (activeCount > 0 ? `Filters (${activeCount})` : 'Filters')}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
 
-// ── Shop screen styles ───────────────────────────────────────────────────────
+// ── Screen styles ─────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.bg },
 
-  searchRow: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+  // "Boutique" logo header — centered, matches home screen
+  shopHeader: {
     alignItems: 'center',
-  },
-  searchBar: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 44,
-    gap: 8,
-  },
-  searchInput: { flex: 1, fontSize: 14, color: theme.textPrimary, height: 44 },
-
-  filterBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+    paddingVertical: 16,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E0D8',
-    paddingHorizontal: 10,
-    height: 44,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0EDE8',
   },
-  filterBtnText: { fontSize: 13, fontWeight: '600', color: theme.textPrimary },
-  filterBadge: {
-    backgroundColor: theme.accent,
-    borderRadius: 10,
-    minWidth: 16,
-    height: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
+  shopLogo: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: theme.accent,
+    letterSpacing: -0.5,
   },
-  filterBadgeText: { color: '#FFF', fontSize: 10, fontWeight: '700' },
-
-  sortBtn: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E0D8',
-    paddingHorizontal: 12,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sortBtnText: { fontSize: 13, fontWeight: '600', color: theme.textPrimary },
-
-  sortMenu: {
-    marginHorizontal: 16,
-    backgroundColor: theme.surface,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: theme.border,
-    overflow: 'hidden',
-    marginBottom: 4,
-  },
-  sortOpt:         { paddingHorizontal: 16, paddingVertical: 12 },
-  sortOptActive:   { backgroundColor: theme.bg },
-  sortOptText:     { fontSize: 14, color: theme.textPrimary },
-  sortOptTextActive: { color: theme.accent, fontWeight: '600' },
 
   chipsRow:      { paddingHorizontal: 16, paddingBottom: 10, gap: 8 },
   chip: {
     paddingHorizontal: 16, paddingVertical: 7,
-    borderRadius: 50, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface,
+    borderRadius: 50, borderWidth: 1, borderColor: theme.border,
+    backgroundColor: theme.surface,
   },
   chipActive:     { backgroundColor: theme.accent, borderColor: theme.accent },
   chipText:       { fontSize: 13, color: theme.textPrimary },
-  chipTextActive: { color: theme.surface, fontWeight: '600' },
+  chipTextActive: { color: '#FFFFFF', fontWeight: '600' },
 
-  listContent:   { paddingHorizontal: 16, paddingBottom: 24 },
+  // Extra bottom padding so floating button doesn't cover last items
+  listContent:   { paddingHorizontal: 16, paddingBottom: 96 },
   columnWrapper: { justifyContent: 'space-between', marginBottom: 12 },
   loadingWrap:   { flex: 1, alignItems: 'center', justifyContent: 'center', marginTop: 80 },
+
+  // Floating filter button (position: fixed equivalent in RN)
+  floatingWrap: {
+    position: 'absolute', bottom: 24, left: 0, right: 0,
+    alignItems: 'center',
+  },
+  floatingBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: theme.accent,
+    paddingHorizontal: 28, paddingVertical: 13,
+    borderRadius: 50,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2, shadowRadius: 12,
+    elevation: 8,
+  },
+  floatingBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
 });
 
-// ── Filter modal styles ──────────────────────────────────────────────────────
+// ── Filter drawer styles ──────────────────────────────────────────────────────
 
 const fs = StyleSheet.create({
   overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'flex-end',
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end',
   },
   sheet: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '85%',
+    borderTopLeftRadius: 16, borderTopRightRadius: 16,
+    height: '82%',
     paddingBottom: 24,
   },
   handle: {
-    width: 36, height: 4, borderRadius: 2,
-    backgroundColor: '#D1D5DB',
-    alignSelf: 'center',
-    marginTop: 10, marginBottom: 6,
+    width: 36, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB',
+    alignSelf: 'center', marginTop: 10, marginBottom: 6,
   },
   sheetHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 20, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
   },
   sheetTitle: { fontSize: 17, fontWeight: '700', color: theme.textPrimary },
 
+  // Clear All button — above sections, full width, accent border
+  clearAllBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    paddingVertical: 9, paddingHorizontal: 16, borderRadius: 50,
+    borderWidth: 1, borderColor: theme.accent,
+    marginBottom: 4,
+  },
+  clearAllText: { fontSize: 13, fontWeight: '600', color: theme.accent },
+
   section: {
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    paddingHorizontal: 20, paddingVertical: 16,
+    borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
   },
   sectionTitle: {
-    fontSize: 13, fontWeight: '600', color: theme.textSecondary,
-    textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12,
+    fontSize: 12, fontWeight: '700', color: theme.textSecondary,
+    textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 14,
   },
 
+  // Search
+  searchWrap: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#F3F4F6', borderRadius: 10,
+    paddingHorizontal: 12, height: 44,
+  },
+  searchInput: { flex: 1, fontSize: 14, color: theme.textPrimary, height: 44 },
+
+  // Category rows
+  catRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingVertical: 9, paddingRight: 8,
+    borderLeftWidth: 2, borderLeftColor: 'transparent',
+    borderRadius: 6, marginBottom: 2,
+  },
+  catRowActive: { borderLeftColor: theme.accent, backgroundColor: '#F8F7F4' },
+  catLabel:       { fontSize: 14, color: theme.textPrimary },
+  catLabelActive: { color: theme.accent, fontWeight: '600' },
+
+  // Price
+  priceRow:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  priceInput: {
+    flex: 1, height: 44, borderRadius: 8,
+    borderWidth: 1, borderColor: '#D1D5DB',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    fontSize: 14, color: theme.textPrimary,
+  },
+  priceSep:  { color: theme.textSecondary, fontSize: 16, fontWeight: '400' },
+  priceHint: { fontSize: 12, color: theme.textSecondary, marginTop: 6 },
+
+  // Size pills
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   pill: {
-    paddingHorizontal: 16, paddingVertical: 7,
+    paddingHorizontal: 14, paddingVertical: 6,
     borderRadius: 50, borderWidth: 1.5, borderColor: theme.border,
     backgroundColor: 'transparent',
   },
   pillActive:     { backgroundColor: theme.accent, borderColor: theme.accent },
-  pillText:       { fontSize: 13, color: theme.textPrimary, fontWeight: '500' },
-  pillTextActive: { color: '#FFFFFF', fontWeight: '600' },
+  pillText:       { fontSize: 13, color: theme.textSecondary, fontWeight: '500' },
+  pillTextActive: { color: '#FFFFFF', fontWeight: '700' },
 
-  priceRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  priceInput: {
-    flex: 1, height: 44, borderRadius: 10,
-    borderWidth: 1, borderColor: theme.border,
-    backgroundColor: theme.bg,
-    paddingHorizontal: 12,
-    fontSize: 14, color: theme.textPrimary,
+  // Color ring effect (matching web's box-shadow ring via wrapper view)
+  colorRow:  { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  colorWrap: {
+    borderRadius: 18, borderWidth: 2, borderColor: 'transparent', padding: 2,
   },
-  priceSep: { color: theme.textSecondary, fontSize: 14 },
-
-  colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  colorCircle: {
+  colorWrapActive: { borderColor: theme.accent },
+  colorInner: {
     width: 28, height: 28, borderRadius: 14,
     borderWidth: 1.5, borderColor: 'transparent',
   },
+  colorInnerBorder: { borderColor: '#D1D5DB' },
 
-  checkRow: {
-    flexDirection: 'row', alignItems: 'center',
-    gap: 12, paddingVertical: 8,
+  // Sort radio list
+  sortOptRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 9,
   },
+  radio: {
+    width: 18, height: 18, borderRadius: 9,
+    borderWidth: 1.5, borderColor: theme.border,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  radioActive:  { borderColor: theme.accent },
+  radioDot: {
+    width: 8, height: 8, borderRadius: 4,
+    backgroundColor: theme.accent,
+  },
+  sortOptLabel: { fontSize: 14, color: theme.textPrimary },
+
+  // Material checkboxes
+  checkRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 7 },
   checkbox: {
-    width: 20, height: 20, borderRadius: 5,
+    width: 18, height: 18, borderRadius: 4,
     borderWidth: 1.5, borderColor: theme.border,
     backgroundColor: '#FFFFFF',
     alignItems: 'center', justifyContent: 'center',
   },
   checkboxActive: { backgroundColor: theme.accent, borderColor: theme.accent },
-  checkLabel: { fontSize: 14, color: theme.textPrimary },
+  checkLabel:     { fontSize: 14, color: theme.textSecondary },
 
+  // Footer — single Apply button that just closes
   footer: {
-    flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    paddingHorizontal: 20, paddingTop: 14,
+    borderTopWidth: 1, borderTopColor: '#F3F4F6',
   },
-  clearBtn: {
-    flex: 1, height: 52, borderRadius: 50,
-    borderWidth: 1.5, borderColor: theme.accent,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  clearBtnText: { fontSize: 15, fontWeight: '600', color: theme.accent },
   applyBtn: {
-    flex: 2, height: 52, borderRadius: 50,
+    height: 52, borderRadius: 50,
     backgroundColor: theme.accent,
     alignItems: 'center', justifyContent: 'center',
   },
-  applyBtnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
+  applyBtnText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
 });
