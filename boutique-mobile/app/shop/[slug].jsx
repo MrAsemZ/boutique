@@ -65,8 +65,12 @@ export default function ProductDetailScreen() {
   const stock        = selectedVariant?.stock ?? null;
   const isOutOfStock = stock === 0;
 
-  const wishlistIds  = new Set(wishlistItems.map((w) => w.product_id ?? w.id));
-  const isInWishlist = wishlistIds.has(product.id);
+  // Find the wishlist entry that matches the current variant (or any variant of this
+  // product when no variant is selected yet), so we have the item.id needed for DELETE.
+  const wishlistItem = selectedVariant
+    ? wishlistItems.find((w) => w.variant?.id === selectedVariant.id)
+    : wishlistItems.find((w) => w.product?.id === product.id);
+  const isInWishlist = !!wishlistItem;
 
   const displayName  = product.display_name || product.name_ar || product.name || '';
   const displayPrice = product.sale_price ? parseFloat(product.sale_price) : parseFloat(product.base_price);
@@ -116,7 +120,14 @@ export default function ProductDetailScreen() {
 
   const handleWishlist = () => {
     if (!isAuthenticated) { router.push('/auth/login'); return; }
-    toggleWishlist.mutate({ productId: product.id, isInWishlist });
+    // Use selected variant id, or fall back to the product's first in-stock variant.
+    const variantId = selectedVariant?.id ?? product.first_variant_id;
+    if (!variantId) return;
+    toggleWishlist.mutate({
+      variantId,
+      wishlistItemId: wishlistItem?.id,
+      isInWishlist,
+    });
   };
 
   const handleSizeChange = (size) => {

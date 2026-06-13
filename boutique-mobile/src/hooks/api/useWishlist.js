@@ -15,14 +15,19 @@ export const useWishlist = () => {
   });
 };
 
+// Each wishlist item shape from the API:
+// { id, variant: { id, size, color, stock }, product: { id, name, slug, ... } }
+// POST /wishlist   → { product_variant_id }
+// DELETE /wishlist/{wishlistItemId}  → uses item.id, NOT product.id
+
 export const useToggleWishlist = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ productId, isInWishlist }) => {
+    mutationFn: async ({ variantId, wishlistItemId, isInWishlist }) => {
       if (isInWishlist) {
-        await api.delete(`/wishlist/${productId}`);
+        await api.delete(`/wishlist/${wishlistItemId}`);
       } else {
-        await api.post('/wishlist', { product_id: productId });
+        await api.post('/wishlist', { product_variant_id: variantId });
       }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['wishlist'] }),

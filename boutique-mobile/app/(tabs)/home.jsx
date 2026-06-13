@@ -69,10 +69,18 @@ export default function HomeScreen() {
 
   const { data: wishlistItems = [] } = useWishlist();
   const toggleWishlist = useToggleWishlist();
-  const wishlistIds = new Set(wishlistItems.map((w) => w.product_id ?? w.id));
+  // Build a Set of product IDs from the nested shape { product: { id } }
+  const wishlistIds = new Set(wishlistItems.map((w) => w.product?.id));
 
-  const handleWishlist = (product) =>
-    toggleWishlist.mutate({ productId: product.id, isInWishlist: wishlistIds.has(product.id) });
+  const handleWishlist = (product) => {
+    const wishlistItem      = wishlistItems.find((w) => w.product?.id === product.id);
+    const isCurrentlyWished = !!wishlistItem;
+    toggleWishlist.mutate({
+      variantId:      product.first_variant_id,
+      wishlistItemId: wishlistItem?.id,
+      isInWishlist:   isCurrentlyWished,
+    });
+  };
 
   const handleLang = async () => {
     await changeLanguage(i18n.language === 'ar' ? 'en' : 'ar');
