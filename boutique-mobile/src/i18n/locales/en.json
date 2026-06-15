@@ -105,8 +105,11 @@
   },
   "account": {
     "orders": "My Orders",
+    "my_orders": "My Orders",
+    "wishlist": "Wishlist",
     "profile": "My Profile",
-    "addresses": "Addresses",
+    "addresses": "My Addresses",
+    "password": "Change Password",
     "logout": "Logout",
     "welcome": "Welcome",
     "login_prompt": "Login to view your account"

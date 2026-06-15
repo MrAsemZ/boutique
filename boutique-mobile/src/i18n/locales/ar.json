@@ -105,8 +105,11 @@
   },
   "account": {
     "orders": "طلباتي",
+    "my_orders": "طلباتي",
+    "wishlist": "المفضلة",
     "profile": "معلوماتي",
     "addresses": "عناويني",
+    "password": "تغيير كلمة المرور",
     "logout": "تسجيل الخروج",
     "welcome": "مرحباً",
     "login_prompt": "سجّل دخولك لعرض حسابك"

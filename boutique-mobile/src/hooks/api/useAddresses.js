@@ -22,3 +22,19 @@ export const useCreateAddress = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['addresses'] }),
   });
 };
+
+export const useUpdateAddress = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...data }) => api.put(`/user/addresses/${id}`, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['addresses'] }),
+  });
+};
+
+export const useDeleteAddress = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => api.delete(`/user/addresses/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['addresses'] }),
+  });
+};
