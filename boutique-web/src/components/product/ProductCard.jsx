@@ -82,7 +82,11 @@ export default function ProductCard({ product, isInWishlist = false, onWishlistT
           src={imageUrl}
           alt={productName}
           loading="lazy"
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          style={{
+            width: '100%', height: '100%', objectFit: 'cover',
+            transition: 'transform 0.3s ease',
+            transform: hovered ? 'scale(1.05)' : 'scale(1)',
+          }}
         />
 
         {product.sale_price && <SaleBadge />}

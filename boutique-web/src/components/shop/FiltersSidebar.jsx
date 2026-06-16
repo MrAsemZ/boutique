@@ -82,8 +82,8 @@ function CatItem({ cat, activeSlug, isArabic, onSelect, depth = 0 }) {
             ? 'color-mix(in srgb, var(--theme-accent) 8%, transparent)'
             : 'transparent',
         color: isActive ? 'var(--theme-accent)' : 'var(--theme-text-primary)',
-        fontWeight: isActive ? 500 : 400,
-        borderInlineStart: isActive ? '2px solid var(--theme-accent)' : '2px solid transparent',
+        fontWeight: isActive ? 700 : 400,
+        borderInlineStart: isActive ? '3px solid var(--theme-accent)' : '3px solid transparent',
         fontSize: '0.875rem',
         transition: 'background 0.15s, color 0.15s',
       }}
@@ -151,8 +151,8 @@ export default function FiltersSidebar({
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
             width: '100%', padding: '8px 16px', borderRadius: '50px',
-            border: '1px solid var(--theme-accent)', background: 'transparent',
-            color: 'var(--theme-accent)',
+            border: 'none', background: 'var(--theme-accent)',
+            color: 'var(--theme-surface)',
             fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer', margin: '12px 0 4px',
           }}
         >
@@ -240,9 +240,10 @@ export default function FiltersSidebar({
                 style={{
                   padding: '5px 14px', borderRadius: '50px', fontSize: '0.8125rem',
                   fontWeight: 500, cursor: 'pointer',
-                  border: `1.5px solid ${active ? 'var(--theme-accent)' : 'var(--theme-border)'}`,
+                  border: `2px solid ${active ? 'var(--theme-accent)' : 'var(--theme-border)'}`,
                   background: active ? 'var(--theme-accent)' : 'transparent',
-                  color: active ? 'var(--theme-bg)' : 'var(--theme-text-secondary)',
+                  color: active ? 'var(--theme-surface)' : 'var(--theme-text-secondary)',
+                  boxShadow: active ? '0 2px 8px color-mix(in srgb, var(--theme-accent) 40%, transparent)' : 'none',
                   transition: 'all 0.15s',
                 }}
               >
@@ -269,7 +270,7 @@ export default function FiltersSidebar({
                   border: active
                     ? '3px solid var(--theme-accent)'
                     : `2px solid ${color.border ? 'var(--theme-border)' : 'transparent'}`,
-                  boxShadow: active ? '0 0 0 2px var(--theme-bg)' : 'none',
+                  boxShadow: active ? '0 0 0 3px var(--theme-bg), 0 0 0 4px var(--theme-accent)' : 'none',
                   outline: 'none', transition: 'border 0.15s, box-shadow 0.15s',
                 }}
               />

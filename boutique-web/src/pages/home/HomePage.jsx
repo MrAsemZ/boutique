@@ -138,15 +138,15 @@ function HeroSection({ isArabic }) {
           lineHeight: 1.15,
           letterSpacing: isArabic ? 0 : '-0.02em',
         }}>
-          {isArabic ? 'اكتشف أناقتك' : 'Discover Your Style'}
+          {isArabic ? 'أناقتك تبدأ هنا' : 'Your Style Starts Here'}
         </h1>
         <p style={{
           fontSize: 'clamp(1rem, 2.5vw, 1.25rem)',
           color: 'rgba(255,255,255,0.85)', margin: '0 0 40px', lineHeight: 1.6,
         }}>
           {isArabic
-            ? 'أحدث صيحات الموضة من أفضل البائعين'
-            : 'Latest fashion trends from top vendors'}
+            ? 'تشكيلات حصرية من أفضل العلامات التجارية في الأردن'
+            : 'Exclusive collections from the finest brands in Jordan'}
         </p>
         <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
           <Link

@@ -228,14 +228,23 @@ function QuantitySelector({ quantity, max, onInc, onDec }) {
 
 function ProductDetailsSection({ product, selectedVariant, isArabic }) {
   const [open, setOpen] = useState(false);
+  const brand = product?.brand_name || product?.brand?.name ||
+    (isArabic ? product?.brand_ar : product?.brand) || product?.brand;
   const rows = [
     [isArabic ? 'الفئة' : 'Category',       categoryName(product?.category, isArabic)],
-    [isArabic ? 'العلامة التجارية' : 'Brand', product?.brand_name || product?.brand?.name],
+    [isArabic ? 'العلامة التجارية' : 'Brand', brand],
     [isArabic ? 'الخامة' : 'Material',       selectedVariant?.material || product?.material],
     ['SKU',                                   selectedVariant?.sku || product?.sku],
   ].filter(([, v]) => v);
 
-  if (!rows.length) return null;
+  rows.push([
+    isArabic ? 'العناية' : 'Care',
+    isArabic ? 'قابل للغسيل على 30 درجة' : 'Machine washable at 30°C',
+  ]);
+  rows.push([
+    isArabic ? 'المنشأ' : 'Origin',
+    isArabic ? 'صُنع باهتمام' : 'Made with care',
+  ]);
 
   return (
     <div style={{ borderTop: '1px solid var(--theme-border)', paddingTop: '16px' }}>
