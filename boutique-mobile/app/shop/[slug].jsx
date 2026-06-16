@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useState, useMemo, useLayoutEffect } from 'react';
 import { useProduct } from '../../src/hooks/api/useProducts';
 import { useAddToCart } from '../../src/hooks/api/useCart';
 import { useWishlist, useToggleWishlist } from '../../src/hooks/api/useWishlist';
@@ -14,10 +14,9 @@ import useAuthStore from '../../src/stores/authStore';
 import useCartStore from '../../src/stores/cartStore';
 import LoadingScreen from '../../src/components/LoadingScreen';
 import ErrorScreen from '../../src/components/ErrorScreen';
-import { themes } from '../../src/theme/colors';
+import { useAppTheme, useSetTheme } from '../../src/context/ThemeContext';
 import { formatPrice } from '../../src/utils/formatPrice';
 
-const theme = themes.default;
 const { width: SW } = Dimensions.get('window');
 const FALLBACK = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&h=800&fit=crop';
 
@@ -37,6 +36,10 @@ export default function ProductDetailScreen() {
   const { slug } = useLocalSearchParams();
   const isArabic = i18n.language === 'ar';
 
+  const theme            = useAppTheme();
+  const setThemeForCategory = useSetTheme();
+  const styles           = useMemo(() => createStyles(theme), [theme]);
+
   const { data: product, isLoading, isError, refetch } = useProduct(slug);
   const addToCartMutation = useAddToCart();
   const { data: wishlistItems = [] } = useWishlist();
@@ -48,14 +51,25 @@ export default function ProductDetailScreen() {
   const [quantity,      setQuantity]      = useState(1);
   const [descExpanded,  setDescExpanded]  = useState(false);
 
+  // Apply category theme when product data arrives
+  useLayoutEffect(() => {
+    if (product?.category?.slug) {
+      setThemeForCategory(product.category.slug);
+    }
+  }, [product?.category?.slug]);
+
   if (isLoading) return <LoadingScreen />;
   if (isError || !product) return <ErrorScreen onRetry={refetch} />;
 
-  // Variant extraction — always use Object.entries to preserve size key
+  // Variant extraction
   const allVariants = Object.entries(product.variants_grouped || {}).flatMap(([size, vs]) =>
     vs.map((v) => ({ ...v, size }))
   );
   const uniqueSizes    = [...new Set(allVariants.map((v) => v.size))];
+  const sizeInStock    = {};
+  uniqueSizes.forEach((sz) => {
+    sizeInStock[sz] = allVariants.some((v) => v.size === sz && v.stock > 0);
+  });
   const colorsForSize  = selectedSize ? allVariants.filter((v) => v.size === selectedSize) : [];
   const selectedVariant =
     selectedSize && selectedColor
@@ -65,21 +79,18 @@ export default function ProductDetailScreen() {
   const stock        = selectedVariant?.stock ?? null;
   const isOutOfStock = stock === 0;
 
-  // Find the wishlist entry that matches the current variant (or any variant of this
-  // product when no variant is selected yet), so we have the item.id needed for DELETE.
   const wishlistItem = selectedVariant
     ? wishlistItems.find((w) => w.variant?.id === selectedVariant.id)
     : wishlistItems.find((w) => w.product?.id === product.id);
   const isInWishlist = !!wishlistItem;
 
-  const displayName  = product.display_name || product.name_ar || product.name || '';
-  const displayPrice = product.sale_price ? parseFloat(product.sale_price) : parseFloat(product.base_price);
+  const displayName   = product.display_name || product.name_ar || product.name || '';
+  const displayPrice  = product.sale_price ? parseFloat(product.sale_price) : parseFloat(product.base_price);
   const originalPrice = parseFloat(product.base_price);
-  const isOnSale     = product.sale_price && parseFloat(product.sale_price) < originalPrice;
-  const discountPct  = isOnSale ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100) : 0;
+  const isOnSale      = product.sale_price && parseFloat(product.sale_price) < originalPrice;
+  const discountPct   = isOnSale ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100) : 0;
 
-  const image =
-    (product.images && product.images[0]?.url) || product.primary_image_url || FALLBACK;
+  const image = (product.images && product.images[0]?.url) || product.primary_image_url || FALLBACK;
 
   const handleAddToCart = () => {
     if (!selectedVariant) {
@@ -91,7 +102,7 @@ export default function ProductDetailScreen() {
         { variant_id: selectedVariant.id, quantity },
         {
           onSuccess: () => Alert.alert('', t('product.added_to_cart')),
-          onError:  (e) => Alert.alert('', e.response?.data?.message || t('common.error')),
+          onError:   (e) => Alert.alert('', e.response?.data?.message || t('common.error')),
         }
       );
     } else {
@@ -120,14 +131,9 @@ export default function ProductDetailScreen() {
 
   const handleWishlist = () => {
     if (!isAuthenticated) { router.push('/auth/login'); return; }
-    // Use selected variant id, or fall back to the product's first in-stock variant.
     const variantId = selectedVariant?.id ?? product.first_variant_id;
     if (!variantId) return;
-    toggleWishlist.mutate({
-      variantId,
-      wishlistItemId: wishlistItem?.id,
-      isInWishlist,
-    });
+    toggleWishlist.mutate({ variantId, wishlistItemId: wishlistItem?.id, isInWishlist });
   };
 
   const handleSizeChange = (size) => {
@@ -150,12 +156,26 @@ export default function ProductDetailScreen() {
       </TouchableOpacity>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Product image — edge to edge */}
-        <Image source={{ uri: image }} style={styles.heroImage} resizeMode="cover" />
+        {/* Product image */}
+        <View>
+          <Image source={{ uri: image }} style={styles.heroImage} resizeMode="cover" />
+          {/* Bottom fade — layered to simulate a smooth gradient into themed background */}
+          <View style={styles.imageFadeWrap} pointerEvents="none">
+            <View style={[styles.fadeStep, { backgroundColor: theme.bg, opacity: 0.12 }]} />
+            <View style={[styles.fadeStep, { backgroundColor: theme.bg, opacity: 0.3 }]} />
+            <View style={[styles.fadeStep, { backgroundColor: theme.bg, opacity: 0.6 }]} />
+            <View style={[styles.fadeStep, { backgroundColor: theme.bg, opacity: 1 }]} />
+          </View>
+        </View>
 
+        {/* Floating info card — overlaps the image bottom for a premium card-stack feel */}
         <View style={styles.content}>
-          {/* Brand */}
-          {product.brand ? <Text style={styles.brand}>{product.brand}</Text> : null}
+          {/* Brand badge */}
+          {product.brand ? (
+            <View style={styles.brandBadge}>
+              <Text style={styles.brandBadgeText}>{product.brand}</Text>
+            </View>
+          ) : null}
 
           {/* Name */}
           <Text style={styles.name}>{displayName}</Text>
@@ -167,13 +187,13 @@ export default function ProductDetailScreen() {
               <>
                 <Text style={styles.originalPrice}>{formatPrice(originalPrice, i18n.language)}</Text>
                 <View style={styles.saleBadge}>
-                  <Text style={styles.saleBadgeText}>{discountPct}% {isArabic ? 'خصم' : 'OFF'}</Text>
+                  <Text style={styles.saleBadgeText}>−{discountPct}%</Text>
                 </View>
               </>
             )}
           </View>
 
-          {/* Stock indicator */}
+          {/* Stock */}
           {selectedVariant && (
             <Text style={[styles.stock, selectedVariant.stock > 0 ? styles.inStock : styles.outStock]}>
               {selectedVariant.stock > 0
@@ -197,22 +217,41 @@ export default function ProductDetailScreen() {
             </View>
           ) : null}
 
-          {/* ── Size pills — fully rounded ── */}
+          {/* Size selector */}
           {uniqueSizes.length > 0 && (
             <View style={styles.selectorSection}>
-              <Text style={styles.selectorLabel}>
-                {isArabic ? 'المقاس' : 'Size'}
-              </Text>
+              <View style={styles.selectorHeaderRow}>
+                <Text style={styles.selectorLabel}>{isArabic ? 'المقاس' : 'Size'}</Text>
+                <TouchableOpacity
+                  onPress={() =>
+                    Alert.alert('', isArabic ? 'دليل المقاسات قريباً' : 'Size guide coming soon')
+                  }
+                >
+                  <Text style={styles.sizeGuideLink}>
+                    {isArabic ? 'دليل المقاسات' : 'Size Guide'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
               <View style={styles.pillRow}>
                 {uniqueSizes.map((size) => {
                   const isSelected = selectedSize === size;
+                  const inStock    = sizeInStock[size];
                   return (
                     <TouchableOpacity
                       key={size}
-                      style={[styles.sizePill, isSelected && styles.sizePillActive]}
-                      onPress={() => handleSizeChange(size)}
+                      style={[
+                        styles.sizePill,
+                        isSelected && styles.sizePillActive,
+                        !inStock && styles.sizePillOOS,
+                      ]}
+                      onPress={() => inStock && handleSizeChange(size)}
+                      disabled={!inStock}
                     >
-                      <Text style={[styles.sizePillText, isSelected && styles.sizePillTextActive]}>
+                      <Text style={[
+                        styles.sizePillText,
+                        isSelected && styles.sizePillTextActive,
+                        !inStock && styles.sizePillTextOOS,
+                      ]}>
                         {size}
                       </Text>
                     </TouchableOpacity>
@@ -222,7 +261,7 @@ export default function ProductDetailScreen() {
             </View>
           )}
 
-          {/* ── Color swatches — 32px circles, 3px accent border when selected ── */}
+          {/* Color swatches */}
           {colorsForSize.length > 0 && (
             <View style={styles.selectorSection}>
               <Text style={styles.selectorLabel}>
@@ -240,11 +279,7 @@ export default function ProductDetailScreen() {
                   return (
                     <TouchableOpacity
                       key={v.id}
-                      style={[
-                        styles.colorCircle,
-                        { backgroundColor: hex },
-                        isSelected && styles.colorCircleActive,
-                      ]}
+                      style={[styles.colorCircle, { backgroundColor: hex }, isSelected && styles.colorCircleActive]}
                       onPress={() => setSelectedColor(v.color)}
                     />
                   );
@@ -253,7 +288,7 @@ export default function ProductDetailScreen() {
             </View>
           )}
 
-          {/* ── Quantity — pill shape ── */}
+          {/* Quantity */}
           {!isOutOfStock && (
             <View style={styles.selectorSection}>
               <Text style={styles.selectorLabel}>{isArabic ? 'الكمية' : 'Quantity'}</Text>
@@ -277,12 +312,11 @@ export default function ProductDetailScreen() {
             </View>
           )}
 
-          {/* Spacer for fixed bottom bar */}
           <View style={{ height: 90 }} />
         </View>
       </ScrollView>
 
-      {/* ── Fixed bottom bar: [heart] [Add to Cart] ── */}
+      {/* Fixed bottom bar */}
       <View style={styles.bottomBar}>
         <TouchableOpacity
           style={[styles.wishlistBtn, isInWishlist && styles.wishlistBtnActive]}
@@ -309,121 +343,144 @@ export default function ProductDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: theme.bg },
+// ── Style creator ─────────────────────────────────────────────────────────────
 
-  backBtn: {
-    position: 'absolute', top: 12, left: 16, zIndex: 10,
-    backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 22,
-    width: 40, height: 40,
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1, shadowRadius: 4, elevation: 3,
-  },
+function createStyles(theme) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: theme.bg },
 
-  heroImage: { width: SW, height: 400 },
-  content:   { padding: 16 },
+    backBtn: {
+      position: 'absolute', top: 12, left: 16, zIndex: 10,
+      backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 22,
+      width: 40, height: 40,
+      alignItems: 'center', justifyContent: 'center',
+      shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1, shadowRadius: 4, elevation: 3,
+    },
 
-  brand: {
-    fontSize: 11, color: theme.textSecondary,
-    letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4,
-  },
-  name:  { fontSize: 22, fontWeight: '700', color: theme.textPrimary, marginBottom: 10 },
+    heroImage: { width: SW, height: 420 },
+    // Layered fade blends image into themed background
+    imageFadeWrap: {
+      position: 'absolute', bottom: 0, left: 0, right: 0, height: 80,
+      flexDirection: 'column',
+    },
+    fadeStep: { flex: 1 },
 
-  priceRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' },
-  price:    { fontSize: 24, fontWeight: '800', color: theme.accent },
-  originalPrice: { fontSize: 16, color: theme.textSecondary, textDecorationLine: 'line-through' },
-  saleBadge: {
-    backgroundColor: '#EF4444', borderRadius: 4,
-    paddingHorizontal: 7, paddingVertical: 2,
-  },
-  saleBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
+    // Floating card — overlaps the image bottom edge
+    content: {
+      backgroundColor: theme.surface,
+      marginTop: -20,
+      borderTopLeftRadius: 20, borderTopRightRadius: 20,
+      padding: 20,
+      shadowColor: '#000', shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+    },
 
-  stock:   { fontSize: 13, fontWeight: '600', marginBottom: 14 },
-  inStock: { color: '#38A169' },
-  outStock: { color: '#E53E3E' },
+    brandBadge: {
+      alignSelf: 'flex-start',
+      backgroundColor: theme.bg,
+      borderRadius: 50,
+      paddingHorizontal: 10, paddingVertical: 4,
+      marginBottom: 8,
+    },
+    brandBadgeText: {
+      fontSize: 11, fontWeight: '700', color: theme.accent,
+      textTransform: 'uppercase', letterSpacing: 0.5, fontStyle: 'italic',
+    },
+    name: { fontSize: 22, fontWeight: '700', color: theme.textPrimary, marginBottom: 10 },
 
-  descSection: { marginBottom: 20 },
-  descLabel:   { fontSize: 13, fontWeight: '600', color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
-  descText:    { fontSize: 14, color: theme.textSecondary, lineHeight: 22 },
-  descToggle:  { color: theme.accent, fontSize: 13, fontWeight: '600', marginTop: 4 },
+    priceRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' },
+    price:    { fontSize: 24, fontWeight: '800', color: theme.accent },
+    originalPrice: { fontSize: 16, color: theme.textSecondary, textDecorationLine: 'line-through' },
+    saleBadge: {
+      backgroundColor: '#EF4444', borderRadius: 50,
+      paddingHorizontal: 8, paddingVertical: 3,
+    },
+    saleBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
 
-  selectorSection: { marginBottom: 20 },
-  selectorLabel: {
-    fontSize: 13, fontWeight: '600', color: theme.textSecondary,
-    textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10,
-  },
+    stock:    { fontSize: 13, fontWeight: '600', marginBottom: 14 },
+    inStock:  { color: '#38A169' },
+    outStock: { color: '#E53E3E' },
 
-  // Size pills — borderRadius 50 (fully rounded, matching web)
-  pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  sizePill: {
-    paddingHorizontal: 16, paddingVertical: 8,
-    borderRadius: 50,
-    borderWidth: 1.5, borderColor: theme.border,
-    backgroundColor: 'transparent',
-    alignItems: 'center',
-  },
-  sizePillActive:     { backgroundColor: theme.accent, borderColor: theme.accent },
-  sizePillText:       { fontSize: 14, color: theme.textPrimary, fontWeight: '500' },
-  sizePillTextActive: { color: '#FFFFFF', fontWeight: '700' },
+    descSection: { marginBottom: 20 },
+    descLabel: {
+      fontSize: 13, fontWeight: '600', color: theme.textSecondary,
+      textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6,
+    },
+    descText:   { fontSize: 14, color: theme.textSecondary, lineHeight: 22 },
+    descToggle: { color: theme.accent, fontSize: 13, fontWeight: '600', marginTop: 4 },
 
-  // Color swatches — 32px circles
-  colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  colorCircle: {
-    width: 32, height: 32, borderRadius: 16,
-    borderWidth: 1.5, borderColor: 'rgba(0,0,0,0.08)',
-  },
-  colorCircleActive: {
-    borderWidth: 3, borderColor: theme.accent,
-    shadowColor: theme.accent,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4, shadowRadius: 4,
-  },
+    selectorSection: { marginBottom: 20 },
+    selectorLabel: {
+      fontSize: 13, fontWeight: '600', color: theme.textSecondary,
+      textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10,
+    },
+    selectorHeaderRow: {
+      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    },
+    sizeGuideLink: {
+      fontSize: 12, fontWeight: '600', color: theme.accent,
+      textDecorationLine: 'underline', marginBottom: 10,
+    },
 
-  // Quantity — pill shape (height 44px, border around entire row)
-  qtyPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 44,
-    alignSelf: 'flex-start',
-    borderWidth: 1.5,
-    borderColor: theme.border,
-    borderRadius: 50,
-    overflow: 'hidden',
-  },
-  qtyBtn: { paddingHorizontal: 18, height: '100%', alignItems: 'center', justifyContent: 'center' },
-  qtyBtnText:     { fontSize: 22, color: theme.accent, fontWeight: '700', lineHeight: 26 },
-  qtyBtnDisabled: { opacity: 0.35 },
-  qtyNum: {
-    minWidth: 40, textAlign: 'center',
-    fontSize: 16, fontWeight: '600', color: theme.textPrimary,
-  },
+    pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    sizePill: {
+      paddingHorizontal: 16, paddingVertical: 8,
+      borderRadius: 50, borderWidth: 1.5, borderColor: theme.border,
+      alignItems: 'center',
+    },
+    sizePillActive:     { backgroundColor: theme.accent, borderColor: theme.accent },
+    sizePillOOS:        { opacity: 0.4 },
+    sizePillText:       { fontSize: 14, color: theme.textPrimary, fontWeight: '500' },
+    sizePillTextActive: { color: '#FFFFFF', fontWeight: '700' },
+    sizePillTextOOS:    { textDecorationLine: 'line-through' },
 
-  // Bottom bar — matching web mobile sticky cart
-  bottomBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#F0EDE8',
-  },
-  wishlistBtn: {
-    width: 52, height: 52, borderRadius: 26,
-    borderWidth: 1.5, borderColor: theme.border,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  wishlistBtnActive: { borderColor: '#FDE8E8' },
-  addBtn: {
-    flex: 1,
-    backgroundColor: theme.accent,
-    borderRadius: 50,
-    height: 52,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  addBtnDisabled: { opacity: 0.45 },
-  addBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
-});
+    colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+    colorCircle: {
+      width: 32, height: 32, borderRadius: 16,
+      borderWidth: 1.5, borderColor: 'rgba(0,0,0,0.08)',
+    },
+    colorCircleActive: {
+      borderWidth: 3, borderColor: theme.accent,
+      shadowColor: theme.accent,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.4, shadowRadius: 4,
+    },
+
+    qtyPill: {
+      flexDirection: 'row', alignItems: 'center', height: 44,
+      alignSelf: 'flex-start',
+      borderWidth: 1.5, borderColor: theme.border, borderRadius: 50, overflow: 'hidden',
+    },
+    qtyBtn:         { paddingHorizontal: 18, height: '100%', alignItems: 'center', justifyContent: 'center' },
+    qtyBtnText:     { fontSize: 22, color: theme.accent, fontWeight: '700', lineHeight: 26 },
+    qtyBtnDisabled: { opacity: 0.35 },
+    qtyNum: {
+      minWidth: 40, textAlign: 'center',
+      fontSize: 16, fontWeight: '600', color: theme.textPrimary,
+    },
+
+    bottomBar: {
+      flexDirection: 'row', alignItems: 'center', gap: 12,
+      paddingHorizontal: 16, paddingVertical: 12,
+      backgroundColor: theme.surface,
+      borderTopWidth: 1, borderTopColor: theme.border,
+      shadowColor: '#000', shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.06, shadowRadius: 10, elevation: 6,
+    },
+    wishlistBtn: {
+      width: 52, height: 52, borderRadius: 26,
+      borderWidth: 1.5, borderColor: theme.border,
+      backgroundColor: theme.surface,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    wishlistBtnActive: { borderColor: '#FDE8E8' },
+    addBtn: {
+      flex: 1, backgroundColor: theme.accent,
+      borderRadius: 50, height: 52,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    addBtnDisabled: { opacity: 0.45 },
+    addBtnText:     { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+  });
+}

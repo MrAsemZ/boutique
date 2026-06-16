@@ -9,15 +9,14 @@ import { useCallback } from 'react';
 import { useWishlist, useRemoveFromWishlist } from '../../src/hooks/api/useWishlist';
 import ProductCard from '../../src/components/ProductCard';
 import LoadingScreen from '../../src/components/LoadingScreen';
-import { themes } from '../../src/theme/colors';
-
-const theme = themes.default;
+import { useAppTheme } from '../../src/context/ThemeContext';
 const { width: SW } = Dimensions.get('window');
 const ITEM_W = (SW - 16 * 2 - 12) / 2;
 
 export default function WishlistScreen() {
   const { t, i18n } = useTranslation();
   const router   = useRouter();
+  const theme    = useAppTheme();
   const isArabic = i18n.language === 'ar';
 
   const { data: wishlistItems = [], isLoading } = useWishlist();
@@ -64,7 +63,7 @@ export default function WishlistScreen() {
   if (isLoading) return <LoadingScreen />;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
@@ -110,7 +109,7 @@ export default function WishlistScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F8F7F4' },
+  safe: { flex: 1 },
 
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -119,7 +118,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: '#F0EDE8',
   },
   backBtn:     { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: theme.textPrimary },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: '#1A1A1A' },
 
   list: { padding: 16, paddingBottom: 40 },
   row:  { justifyContent: 'space-between', marginBottom: 12 },
@@ -128,10 +127,10 @@ const styles = StyleSheet.create({
     flex: 1, alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: 32, gap: 12,
   },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: theme.textPrimary, textAlign: 'center' },
-  emptySub:   { fontSize: 14, color: theme.textSecondary, textAlign: 'center' },
+  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#1A1A1A', textAlign: 'center' },
+  emptySub:   { fontSize: 14, color: '#6B6B6B', textAlign: 'center' },
   browseBtn: {
-    marginTop: 8, backgroundColor: theme.accent, borderRadius: 50,
+    marginTop: 8, backgroundColor: '#2D2D2D', borderRadius: 50,
     height: 52, paddingHorizontal: 36,
     alignItems: 'center', justifyContent: 'center',
   },

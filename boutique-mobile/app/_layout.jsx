@@ -8,6 +8,7 @@ import useAuthStore from '../src/stores/authStore';
 import useCartStore from '../src/stores/cartStore';
 import { getStoredLocale } from '../src/i18n/index';
 import i18n from '../src/i18n/index';
+import { ThemeProvider } from '../src/context/ThemeContext';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,6 +41,7 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
       <StatusBar style="auto" />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
@@ -51,6 +53,7 @@ export default function RootLayout() {
         <Stack.Screen name="orders/index" />
         <Stack.Screen name="orders/[id]" />
       </Stack>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

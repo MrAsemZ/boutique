@@ -11,9 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import useAuthStore from '../../src/stores/authStore';
 import { useUpdateProfile } from '../../src/hooks/api/useProfile';
 import { changeLanguage } from '../../src/i18n/index';
-import { themes } from '../../src/theme/colors';
-
-const theme = themes.default;
+import { useAppTheme } from '../../src/context/ThemeContext';
 
 const GENDER_OPTIONS = [
   { key: 'male',   ar: 'ذكر',                en: 'Male'               },
@@ -29,6 +27,7 @@ const LANG_OPTIONS = [
 export default function ProfileScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const theme  = useAppTheme();
   const user    = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const isArabic = i18n.language === 'ar';
@@ -80,13 +79,13 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={theme.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('account.profile')}</Text>
+        <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>{t('account.profile')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -97,16 +96,18 @@ export default function ProfileScreen() {
       >
         {/* Avatar */}
         <View style={styles.avatarWrap}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{initials}</Text>
+          <View style={[styles.avatarRing, { borderColor: theme.border }]}>
+            <View style={[styles.avatar, { backgroundColor: theme.accent }]}>
+              <Text style={styles.avatarText}>{initials}</Text>
+            </View>
           </View>
-          <Text style={styles.avatarEmail}>{user?.email}</Text>
+          <Text style={[styles.avatarEmail, { color: theme.textSecondary }]}>{user?.email}</Text>
         </View>
 
         {/* Full Name */}
         <Text style={styles.label}>{isArabic ? 'الاسم الكامل' : 'Full Name'}</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { color: theme.textPrimary }]}
           value={form.name}
           onChangeText={(v) => setField('name', v)}
           placeholder={isArabic ? 'أدخل اسمك' : 'Enter your name'}
@@ -116,7 +117,7 @@ export default function ProfileScreen() {
         {/* Email — read-only */}
         <Text style={styles.label}>{isArabic ? 'البريد الإلكتروني' : 'Email'}</Text>
         <TextInput
-          style={[styles.input, styles.inputDisabled]}
+          style={[styles.input, styles.inputDisabled, { color: theme.textPrimary }]}
           value={user?.email || ''}
           editable={false}
           placeholderTextColor="#9CA3AF"
@@ -125,7 +126,7 @@ export default function ProfileScreen() {
         {/* Phone */}
         <Text style={styles.label}>{isArabic ? 'رقم الهاتف' : 'Phone'}</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { color: theme.textPrimary }]}
           value={form.phone}
           onChangeText={(v) => setField('phone', v)}
           placeholder={isArabic ? 'أدخل رقم هاتفك' : 'Enter your phone'}
@@ -141,7 +142,7 @@ export default function ProfileScreen() {
             return (
               <TouchableOpacity
                 key={g.key + '_gender'}
-                style={[styles.pill, active && styles.pillActive]}
+                style={[styles.pill, active && { backgroundColor: theme.accent, borderColor: theme.accent }]}
                 onPress={() => setField('gender', g.key)}
               >
                 <Text style={[styles.pillText, active && styles.pillTextActive]}>
@@ -160,7 +161,7 @@ export default function ProfileScreen() {
             return (
               <TouchableOpacity
                 key={l.key + '_lang'}
-                style={[styles.pill, styles.pillLang, active && styles.pillActive]}
+                style={[styles.pill, styles.pillLang, active && { backgroundColor: theme.accent, borderColor: theme.accent }]}
                 onPress={() => handleLangChange(l.key)}
               >
                 <Text style={[styles.pillText, active && styles.pillTextActive]}>
@@ -173,7 +174,7 @@ export default function ProfileScreen() {
 
         {/* Save */}
         <TouchableOpacity
-          style={[styles.saveBtn, updateProfile.isPending && styles.btnDisabled]}
+          style={[styles.saveBtn, { backgroundColor: theme.accent }, updateProfile.isPending && styles.btnDisabled]}
           onPress={handleSave}
           disabled={updateProfile.isPending}
           activeOpacity={0.85}
@@ -191,6 +192,8 @@ export default function ProfileScreen() {
   );
 }
 
+// Styles are created inside the component using useAppTheme()
+// and applied via inline style overrides where theme-dependent.
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F8F7F4' },
 
@@ -200,20 +203,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1, borderBottomColor: '#F0EDE8',
   },
-  backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: theme.textPrimary },
+  backBtn:     { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { fontSize: 17, fontWeight: '700' },
 
   scroll: { padding: 16 },
 
   avatarWrap: { alignItems: 'center', paddingVertical: 24 },
+  avatarRing: {
+    borderWidth: 2, borderRadius: 42, padding: 3, marginBottom: 10,
+  },
   avatar: {
     width: 72, height: 72, borderRadius: 36,
-    backgroundColor: theme.accent,
     alignItems: 'center', justifyContent: 'center',
-    marginBottom: 10,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1, shadowRadius: 8, elevation: 3,
   },
   avatarText:  { color: '#FFFFFF', fontSize: 26, fontWeight: '800' },
-  avatarEmail: { fontSize: 13, color: theme.textSecondary },
+  avatarEmail: { fontSize: 13, marginTop: 4 },
 
   label: {
     fontSize: 13, fontWeight: '600', color: '#374151',
@@ -222,7 +228,7 @@ const styles = StyleSheet.create({
   input: {
     height: 48, borderRadius: 10, borderWidth: 1, borderColor: '#D1D5DB',
     backgroundColor: '#FFFFFF', paddingHorizontal: 14,
-    fontSize: 15, color: theme.textPrimary, marginBottom: 14,
+    fontSize: 15, marginBottom: 14,
   },
   inputDisabled: { backgroundColor: '#F9FAFB', color: '#9CA3AF' },
 
@@ -232,15 +238,14 @@ const styles = StyleSheet.create({
     borderRadius: 50, borderWidth: 1.5, borderColor: '#D1D5DB',
     backgroundColor: '#FFFFFF',
   },
-  pillLang: { minWidth: 80, alignItems: 'center' },
-  pillActive:     { backgroundColor: theme.accent, borderColor: theme.accent },
+  pillLang:       { minWidth: 80, alignItems: 'center' },
   pillText:       { fontSize: 13, color: '#374151', fontWeight: '500' },
   pillTextActive: { color: '#FFFFFF', fontWeight: '700' },
 
   saveBtn: {
-    height: 52, borderRadius: 50, backgroundColor: theme.accent,
+    height: 52, borderRadius: 50,
     alignItems: 'center', justifyContent: 'center', marginTop: 8,
   },
-  btnDisabled:  { opacity: 0.6 },
-  saveBtnText:  { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
+  btnDisabled: { opacity: 0.6 },
+  saveBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
 });

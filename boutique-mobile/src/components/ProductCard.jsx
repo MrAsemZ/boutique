@@ -1,14 +1,14 @@
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
-import { themes } from '../theme/colors';
+import { useAppTheme } from '../context/ThemeContext';
 import { formatPrice } from '../utils/formatPrice';
 
-const theme = themes.default;
 const FALLBACK = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400&h=600&fit=crop';
 
 export default function ProductCard({ product, onPress, onWishlistToggle, isInWishlist, style }) {
   const { i18n } = useTranslation();
+  const theme = useAppTheme();
 
   const displayName = product.display_name || product.name_ar || product.name || '';
   const displayPrice = product.sale_price
@@ -56,17 +56,19 @@ export default function ProductCard({ product, onPress, onWishlistToggle, isInWi
       {/* Info */}
       <View style={styles.info}>
         {!!brand && (
-          <Text style={styles.brand} numberOfLines={1}>
+          <Text style={[styles.brand, { color: theme.textSecondary }]} numberOfLines={1}>
             {brand.toUpperCase()}
           </Text>
         )}
-        <Text style={styles.name} numberOfLines={1}>
+        <Text style={[styles.name, { color: theme.textPrimary }]} numberOfLines={1}>
           {displayName}
         </Text>
         <View style={styles.priceRow}>
-          <Text style={styles.price}>{formatPrice(displayPrice, i18n.language)}</Text>
+          <Text style={[styles.price, { color: theme.accent }]}>
+            {formatPrice(displayPrice, i18n.language)}
+          </Text>
           {hasSale && (
-            <Text style={styles.originalPrice}>
+            <Text style={[styles.originalPrice, { color: theme.textSecondary }]}>
               {formatPrice(originalPrice, i18n.language)}
             </Text>
           )}
@@ -83,61 +85,35 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   imageWrap: { position: 'relative', aspectRatio: 3 / 4 },
   image: { width: '100%', height: '100%' },
   saleBadge: {
-    position: 'absolute',
-    top: 8,
-    left: 8,
+    position: 'absolute', top: 8, left: 8,
     backgroundColor: '#E53E3E',
-    borderRadius: 50,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    borderRadius: 50, paddingHorizontal: 8, paddingVertical: 3,
   },
   saleBadgeText: { color: '#FFF', fontSize: 10, fontWeight: '700' },
   wishlistBtn: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    position: 'absolute', top: 8, right: 8,
+    width: 30, height: 30, borderRadius: 15,
     backgroundColor: 'rgba(255,255,255,0.92)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOpacity: 0.1, shadowRadius: 2,
     elevation: 1,
   },
-  info: { padding: 10, paddingTop: 8 },
-  brand: {
-    fontSize: 10,
-    color: theme.textSecondary,
-    letterSpacing: 0.5,
-    marginBottom: 3,
-  },
-  name: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: theme.textPrimary,
-    marginBottom: 6,
-  },
+  info:  { padding: 10, paddingTop: 8 },
+  brand: { fontSize: 10, letterSpacing: 0.5, marginBottom: 3 },
+  name:  { fontSize: 13, fontWeight: '500', marginBottom: 6 },
   priceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    flexWrap: 'wrap',
+    flexDirection: 'row', alignItems: 'center',
+    gap: 6, flexWrap: 'wrap',
   },
-  price: { fontSize: 13, fontWeight: '700', color: theme.accent },
-  originalPrice: {
-    fontSize: 11,
-    color: theme.textSecondary,
-    textDecorationLine: 'line-through',
-  },
+  price:         { fontSize: 13, fontWeight: '700' },
+  originalPrice: { fontSize: 11, textDecorationLine: 'line-through' },
 });

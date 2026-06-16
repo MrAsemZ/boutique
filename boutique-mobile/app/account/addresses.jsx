@@ -14,9 +14,7 @@ import {
   useDeleteAddress,
 } from '../../src/hooks/api/useAddresses';
 import LoadingScreen from '../../src/components/LoadingScreen';
-import { themes } from '../../src/theme/colors';
-
-const theme = themes.default;
+import { useAppTheme } from '../../src/context/ThemeContext';
 
 const LABEL_OPTIONS = [
   { key: 'home', ar: 'المنزل', en: 'Home' },
@@ -31,7 +29,8 @@ const EMPTY_FORM = {
 
 export default function AddressesScreen() {
   const { t, i18n } = useTranslation();
-  const router  = useRouter();
+  const router   = useRouter();
+  const theme    = useAppTheme();
   const isArabic = i18n.language === 'ar';
 
   const { data: addresses = [], isLoading } = useAddresses();
@@ -140,7 +139,7 @@ export default function AddressesScreen() {
   if (isLoading) return <LoadingScreen />;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
@@ -163,7 +162,7 @@ export default function AddressesScreen() {
             <Text style={styles.emptyText}>
               {isArabic ? 'لا توجد عناوين بعد' : 'No addresses yet'}
             </Text>
-            <TouchableOpacity style={styles.addBtn} onPress={openNew}>
+            <TouchableOpacity style={[styles.addBtn, { backgroundColor: theme.accent }]} onPress={openNew}>
               <Text style={styles.addBtnText}>
                 {isArabic ? 'إضافة عنوان' : 'Add Address'}
               </Text>
@@ -173,7 +172,7 @@ export default function AddressesScreen() {
         ListFooterComponent={
           addresses.length > 0
             ? (
-              <TouchableOpacity style={styles.addBtn} onPress={openNew}>
+              <TouchableOpacity style={[styles.addBtn, { backgroundColor: theme.accent }]} onPress={openNew}>
                 <Ionicons name="add-circle-outline" size={18} color="#FFFFFF" />
                 <Text style={styles.addBtnText}>
                   {isArabic ? 'إضافة عنوان جديد' : 'Add New Address'}
@@ -216,7 +215,7 @@ export default function AddressesScreen() {
                   return (
                     <TouchableOpacity
                       key={l.key}
-                      style={[styles.pill, active && styles.pillActive]}
+                      style={[styles.pill, active && { backgroundColor: theme.accent, borderColor: theme.accent }]}
                       onPress={() => setField('label', l.key)}
                     >
                       <Text style={[styles.pillText, active && styles.pillTextActive]}>
@@ -254,7 +253,7 @@ export default function AddressesScreen() {
 
             <View style={styles.sheetFooter}>
               <TouchableOpacity
-                style={[styles.saveBtn, isSaving && styles.btnDisabled]}
+                style={[styles.saveBtn, { backgroundColor: theme.accent }, isSaving && styles.btnDisabled]}
                 onPress={handleSave}
                 disabled={isSaving}
               >
@@ -281,13 +280,15 @@ const styles = StyleSheet.create({
   },
   backBtn:      { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   addHeaderBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  headerTitle:  { fontSize: 17, fontWeight: '700', color: theme.textPrimary },
+  headerTitle:  { fontSize: 17, fontWeight: '700', color: '#1A1A1A' },
 
   list: { padding: 16, paddingBottom: 32 },
 
   addrCard: {
     backgroundColor: '#FFFFFF', borderRadius: 12, padding: 14,
     marginBottom: 12, borderWidth: 1, borderColor: '#F0EDE8',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
   },
   addrTop:     { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   labelBadge: {
@@ -302,16 +303,15 @@ const styles = StyleSheet.create({
   defaultBadgeText: { fontSize: 11, fontWeight: '600', color: '#065F46' },
   addrActions:  { flexDirection: 'row', gap: 4, marginLeft: 'auto' },
   actionBtn:    { padding: 6 },
-  addrName:     { fontSize: 14, fontWeight: '600', color: theme.textPrimary, marginBottom: 2 },
-  addrLine:     { fontSize: 13, color: theme.textSecondary, marginBottom: 1 },
+  addrName:     { fontSize: 14, fontWeight: '600', color: '#1A1A1A', marginBottom: 2 },
+  addrLine:     { fontSize: 13, color: '#6B6B6B', marginBottom: 1 },
 
   emptyWrap: { alignItems: 'center', paddingTop: 80, gap: 16 },
-  emptyText: { fontSize: 15, color: theme.textSecondary, textAlign: 'center' },
+  emptyText: { fontSize: 15, color: '#6B6B6B', textAlign: 'center' },
 
   addBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, backgroundColor: theme.accent, borderRadius: 50,
-    height: 52, marginTop: 16, marginHorizontal: 16,
+    gap: 8, borderRadius: 50, height: 52, marginTop: 16, marginHorizontal: 16,
   },
   addBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
 
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20, paddingVertical: 14,
     borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
   },
-  sheetTitle:   { fontSize: 16, fontWeight: '700', color: theme.textPrimary },
+  sheetTitle:   { fontSize: 16, fontWeight: '700', color: '#1A1A1A' },
   sheetContent: { padding: 20, paddingBottom: 8 },
   sheetFooter:  { padding: 16, borderTopWidth: 1, borderTopColor: '#F3F4F6' },
 
@@ -344,18 +344,18 @@ const styles = StyleSheet.create({
     borderRadius: 50, borderWidth: 1.5, borderColor: '#D1D5DB',
     backgroundColor: '#FFFFFF',
   },
-  pillActive:     { backgroundColor: theme.accent, borderColor: theme.accent },
+  pillActive:     {},
   pillText:       { fontSize: 13, color: '#374151', fontWeight: '500' },
   pillTextActive: { color: '#FFFFFF', fontWeight: '700' },
 
   input: {
     height: 48, borderRadius: 10, borderWidth: 1, borderColor: '#D1D5DB',
     backgroundColor: '#FFFFFF', paddingHorizontal: 14,
-    fontSize: 14, color: theme.textPrimary, marginBottom: 2,
+    fontSize: 14, color: '#1A1A1A', marginBottom: 2,
   },
 
   saveBtn: {
-    height: 52, borderRadius: 50, backgroundColor: theme.accent,
+    height: 52, borderRadius: 50,
     alignItems: 'center', justifyContent: 'center',
   },
   btnDisabled: { opacity: 0.6 },
