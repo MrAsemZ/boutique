@@ -20,7 +20,7 @@ const CARD_W = (SW - SCREEN_PADDING * 2 - 12) / 2;
 
 const CATEGORIES = [
   { slug: 'men',         en: 'Men',         ar: 'رجال',       image: 'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=400&h=300&fit=crop' },
-  { slug: 'women',       en: 'Women',       ar: 'نساء',       image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop' },
+  { slug: 'women',       en: 'Women',       ar: 'نساء',       image: 'https://images.unsplash.com/photo-1769063382670-823451e5a7ef?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
   { slug: 'kids',        en: 'Kids',        ar: 'أطفال',      image: 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=400&h=300&fit=crop' },
   { slug: 'accessories', en: 'Accessories', ar: 'إكسسوارات', image: 'https://images.unsplash.com/photo-1492707892479-7bc8d5a4ee93?w=400&h=300&fit=crop' },
 ];
